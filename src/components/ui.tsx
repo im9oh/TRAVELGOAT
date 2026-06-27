@@ -6,22 +6,77 @@ import type {
   TextareaHTMLAttributes,
 } from 'react'
 
+/* ---------------- Button ---------------- */
+type Variant =
+  | 'green'
+  | 'blue'
+  | 'gold'
+  | 'red'
+  | 'purple'
+  | 'white'
+  | 'ghost'
+  // legacy aliases
+  | 'primary'
+  | 'subtle'
+  | 'danger'
+
+const VARIANT_CLASS: Record<Variant, string> = {
+  green: 'tg-btn--green',
+  blue: 'tg-btn--blue',
+  gold: 'tg-btn--gold',
+  red: 'tg-btn--red',
+  purple: 'tg-btn--purple',
+  white: 'tg-btn--white',
+  ghost: 'tg-btn--ghost',
+  primary: 'tg-btn--green',
+  subtle: 'tg-btn--white',
+  danger: 'tg-btn--red',
+}
+
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: Variant
+  size?: 'sm' | 'md' | 'lg'
+  block?: boolean
+}
+
+export function Button({
+  variant = 'green',
+  size = 'md',
+  block = false,
+  className = '',
+  ...props
+}: ButtonProps) {
+  return (
+    <button
+      className={`tg-btn ${VARIANT_CLASS[variant]} ${
+        size === 'sm' ? 'tg-btn--sm' : size === 'lg' ? 'tg-btn--lg' : ''
+      } ${block ? 'tg-btn--block' : ''} ${className}`}
+      {...props}
+    />
+  )
+}
+
+/* ---------------- Card ---------------- */
 export function Card({
   children,
   className = '',
+  onClick,
 }: {
   children: ReactNode
   className?: string
+  onClick?: () => void
 }) {
   return (
     <div
-      className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 ${className}`}
+      onClick={onClick}
+      className={`tg-card p-4 sm:p-5 ${onClick ? 'cursor-pointer active:translate-y-0.5 transition' : ''} ${className}`}
     >
       {children}
     </div>
   )
 }
 
+/* ---------------- Section title ---------------- */
 export function SectionTitle({
   title,
   subtitle,
@@ -34,59 +89,30 @@ export function SectionTitle({
   return (
     <div className="mb-4 flex items-end justify-between gap-3">
       <div>
-        <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>}
+        <h2 className="text-2xl font-extrabold text-[#3c3c3c]">{title}</h2>
+        {subtitle && (
+          <p className="mt-0.5 text-sm font-bold text-[#afafaf]">{subtitle}</p>
+        )}
       </div>
       {action}
     </div>
   )
 }
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'ghost' | 'danger' | 'subtle'
-}
-
-export function Button({
-  variant = 'primary',
-  className = '',
-  ...props
-}: ButtonProps) {
-  const styles: Record<string, string> = {
-    primary:
-      'bg-teal-600 text-white hover:bg-teal-700 active:bg-teal-800 shadow-sm',
-    subtle: 'bg-slate-100 text-slate-700 hover:bg-slate-200',
-    ghost: 'text-slate-600 hover:bg-slate-100',
-    danger: 'text-red-600 hover:bg-red-50',
-  }
-  return (
-    <button
-      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${styles[variant]} ${className}`}
-      {...props}
-    />
-  )
-}
-
-const fieldBase =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 placeholder:text-slate-400'
-
+/* ---------------- Form fields ---------------- */
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={`${fieldBase} ${props.className ?? ''}`} />
+  return <input {...props} className={`tg-input ${props.className ?? ''}`} />
 }
-
 export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea {...props} className={`${fieldBase} ${props.className ?? ''}`} />
-  )
+  return <textarea {...props} className={`tg-input ${props.className ?? ''}`} />
 }
-
 export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select {...props} className={`${fieldBase} ${props.className ?? ''}`}>
+    <select {...props} className={`tg-input ${props.className ?? ''}`}>
       {props.children}
     </select>
   )
 }
-
 export function Field({
   label,
   children,
@@ -96,7 +122,7 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-[#afafaf]">
         {label}
       </span>
       {children}
@@ -104,31 +130,168 @@ export function Field({
   )
 }
 
+/* ---------------- Badge ---------------- */
+type BadgeColor = 'slate' | 'teal' | 'amber' | 'red' | 'green' | 'blue' | 'purple' | 'gold'
 export function Badge({
   children,
   color = 'slate',
 }: {
   children: ReactNode
-  color?: 'slate' | 'teal' | 'amber' | 'red' | 'green' | 'blue' | 'purple'
+  color?: BadgeColor
 }) {
-  const colors: Record<string, string> = {
-    slate: 'bg-slate-100 text-slate-600',
-    teal: 'bg-teal-100 text-teal-700',
-    amber: 'bg-amber-100 text-amber-700',
-    red: 'bg-red-100 text-red-700',
-    green: 'bg-green-100 text-green-700',
-    blue: 'bg-blue-100 text-blue-700',
-    purple: 'bg-purple-100 text-purple-700',
+  const colors: Record<BadgeColor, string> = {
+    slate: 'bg-[#f0f0f0] text-[#777]',
+    teal: 'bg-[#ddf4ff] text-[#1899d6]',
+    blue: 'bg-[#ddf4ff] text-[#1899d6]',
+    green: 'bg-[#d7ffb8] text-[#58a700]',
+    amber: 'bg-[#fff4d6] text-[#e6a700]',
+    gold: 'bg-[#fff4d6] text-[#e6a700]',
+    red: 'bg-[#ffdfe0] text-[#e63946]',
+    purple: 'bg-[#f3e6ff] text-[#a568cc]',
   }
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${colors[color]}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-extrabold uppercase tracking-wide ${colors[color]}`}
     >
       {children}
     </span>
   )
 }
 
+/* ---------------- Progress bar ---------------- */
+export function ProgressBar({
+  value,
+  color = 'green',
+  className = '',
+}: {
+  value: number
+  color?: 'green' | 'blue' | 'gold' | 'red'
+  className?: string
+}) {
+  const pct = Math.min(100, Math.max(0, value))
+  const bar: Record<string, string> = {
+    green: 'bg-[#58cc02]',
+    blue: 'bg-[#1cb0f6]',
+    gold: 'bg-[#ffc800]',
+    red: 'bg-[#ff4b4b]',
+  }
+  return (
+    <div
+      className={`h-4 w-full overflow-hidden rounded-full bg-[#e5e5e5] ${className}`}
+    >
+      <div
+        className={`relative h-full rounded-full transition-all duration-500 ${bar[color]}`}
+        style={{ width: `${pct}%` }}
+      >
+        {pct > 8 && (
+          <span className="absolute inset-x-1 top-[3px] h-[3px] rounded-full bg-white/40" />
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ---------------- Progress ring ---------------- */
+export function ProgressRing({
+  value,
+  size = 120,
+  stroke = 12,
+  color = '#58cc02',
+  track = '#e5e5e5',
+  children,
+}: {
+  value: number
+  size?: number
+  stroke?: number
+  color?: string
+  track?: string
+  children?: ReactNode
+}) {
+  const pct = Math.min(100, Math.max(0, value))
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  const offset = c - (pct / 100) * c
+  return (
+    <div className="relative inline-flex" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={track}
+          strokeWidth={stroke}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+/* ---------------- Stat pill (top bar) ---------------- */
+export function StatPill({
+  icon,
+  value,
+  color = '#ff9600',
+}: {
+  icon: string
+  value: ReactNode
+  color?: string
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-xl leading-none">{icon}</span>
+      <span className="text-lg font-extrabold" style={{ color }}>
+        {value}
+      </span>
+    </div>
+  )
+}
+
+/* ---------------- Mascot + speech bubble ---------------- */
+export function Mascot({
+  size = 72,
+  bob = false,
+  className = '',
+}: {
+  size?: number
+  bob?: boolean
+  className?: string
+}) {
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-full bg-[#d7ffb8] ${bob ? 'tg-bob' : ''} ${className}`}
+      style={{ width: size, height: size, fontSize: size * 0.55 }}
+    >
+      🐐
+    </div>
+  )
+}
+
+export function SpeechBubble({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative rounded-2xl border-2 border-[#e5e5e5] bg-white px-4 py-3 text-[15px] font-bold leading-snug text-[#4b4b4b]">
+      <span className="absolute -left-2 top-5 h-4 w-4 rotate-45 border-b-2 border-l-2 border-[#e5e5e5] bg-white" />
+      {children}
+    </div>
+  )
+}
+
+/* ---------------- Empty state ---------------- */
 export function EmptyState({
   icon,
   title,
@@ -139,14 +302,17 @@ export function EmptyState({
   hint?: string
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
-      <div className="text-4xl">{icon}</div>
-      <p className="mt-3 font-semibold text-slate-700">{title}</p>
-      {hint && <p className="mt-1 max-w-sm text-sm text-slate-500">{hint}</p>}
+    <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#e5e5e5] bg-white px-6 py-12 text-center">
+      <div className="text-5xl">{icon}</div>
+      <p className="mt-3 text-lg font-extrabold text-[#4b4b4b]">{title}</p>
+      {hint && (
+        <p className="mt-1 max-w-xs text-sm font-bold text-[#afafaf]">{hint}</p>
+      )}
     </div>
   )
 }
 
+/* ---------------- Modal (bottom sheet on mobile) ---------------- */
 export function Modal({
   open,
   onClose,
@@ -161,18 +327,18 @@ export function Modal({
   if (!open) return null
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-[#3c3c3c]/40 p-0 sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl"
+        className="tg-rise max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+          <h3 className="text-xl font-extrabold text-[#3c3c3c]">{title}</h3>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-full p-2 text-xl font-black text-[#afafaf] hover:bg-[#f0f0f0]"
             aria-label="Close"
           >
             ✕
@@ -180,20 +346,6 @@ export function Modal({
         </div>
         {children}
       </div>
-    </div>
-  )
-}
-
-export function ProgressBar({ value }: { value: number }) {
-  const pct = Math.min(100, Math.max(0, value))
-  const color =
-    pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-500' : 'bg-teal-500'
-  return (
-    <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
-      <div
-        className={`h-full rounded-full transition-all ${color}`}
-        style={{ width: `${pct}%` }}
-      />
     </div>
   )
 }

@@ -1,7 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&display=swap');
 @import "tailwindcss";
+
+/* ============================================================
+   TravelGoat — Duolingo-flavored design system
+   Bright, chunky, rounded, tactile. Built for delight.
+   ============================================================ */
 
 :root {
   color-scheme: light;
+
+  /* Brand palette */
+  --tg-green: #58cc02;
+  --tg-green-edge: #58a700;
+  --tg-green-soft: #d7ffb8;
+  --tg-blue: #1cb0f6;
+  --tg-blue-edge: #1899d6;
+  --tg-blue-soft: #ddf4ff;
+  --tg-gold: #ffc800;
+  --tg-gold-edge: #e6a700;
+  --tg-gold-soft: #fff4d6;
+  --tg-red: #ff4b4b;
+  --tg-red-edge: #e63946;
+  --tg-purple: #ce82ff;
+  --tg-purple-edge: #a568cc;
+  --tg-purple-soft: #f3e6ff;
+  --tg-ink: #3c3c3c;
+  --tg-sub: #777777;
+  --tg-line: #e5e5e5;
+  --tg-line-dark: #cfcfcf;
+  --tg-bg: #fbfbfb;
 }
 
 html,
@@ -12,17 +39,167 @@ body,
 
 body {
   margin: 0;
+  background: var(--tg-bg);
+  color: var(--tg-ink);
+  font-family: 'Nunito', ui-sans-serif, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* hide number input spinners for a cleaner look */
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
+h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; }
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-input[type="number"] {
-  -moz-appearance: textfield;
+input[type='number'] { -moz-appearance: textfield; }
+
+/* ---------- The signature 3D press button ---------- */
+.tg-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 16px;
+  padding: 0.85rem 1.25rem;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: filter 0.12s ease, transform 0.04s ease, box-shadow 0.04s ease;
+  will-change: transform;
 }
+.tg-btn:active { transform: translateY(var(--press, 4px)); }
+.tg-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.tg-btn:disabled:active { transform: none; }
+
+.tg-btn--sm { padding: 0.55rem 0.9rem; font-size: 0.8rem; border-radius: 13px; }
+.tg-btn--lg { padding: 1.05rem 1.4rem; font-size: 1.05rem; border-radius: 18px; }
+.tg-btn--block { display: flex; width: 100%; }
+
+.tg-btn--green  { background: var(--tg-green);  box-shadow: 0 4px 0 var(--tg-green-edge); }
+.tg-btn--blue   { background: var(--tg-blue);   box-shadow: 0 4px 0 var(--tg-blue-edge); }
+.tg-btn--gold   { background: var(--tg-gold);   box-shadow: 0 4px 0 var(--tg-gold-edge); color: #8a5a00; }
+.tg-btn--red    { background: var(--tg-red);    box-shadow: 0 4px 0 var(--tg-red-edge); }
+.tg-btn--purple { background: var(--tg-purple); box-shadow: 0 4px 0 var(--tg-purple-edge); }
+.tg-btn--white  { background: #fff; color: var(--tg-blue); box-shadow: 0 4px 0 var(--tg-line); border: 2px solid var(--tg-line); }
+.tg-btn--ghost  { background: transparent; color: var(--tg-sub); box-shadow: none; text-transform: none; letter-spacing: 0; font-weight: 800; }
+.tg-btn--ghost:active { transform: none; }
+
+.tg-btn--green:active  { box-shadow: 0 0 0 var(--tg-green-edge); }
+.tg-btn--blue:active   { box-shadow: 0 0 0 var(--tg-blue-edge); }
+.tg-btn--gold:active   { box-shadow: 0 0 0 var(--tg-gold-edge); }
+.tg-btn--red:active    { box-shadow: 0 0 0 var(--tg-red-edge); }
+.tg-btn--purple:active { box-shadow: 0 0 0 var(--tg-purple-edge); }
+.tg-btn--white:active  { box-shadow: 0 0 0 var(--tg-line); }
+.tg-btn:not(.tg-btn--ghost):hover { filter: brightness(1.04); }
+
+/* ---------- Card with subtle 3D lip ---------- */
+.tg-card {
+  background: #fff;
+  border: 2px solid var(--tg-line);
+  border-bottom-width: 4px;
+  border-radius: 20px;
+}
+
+/* ---------- Journey path nodes ---------- */
+.tg-node {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.9rem;
+  cursor: pointer;
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+}
+.tg-node:active { transform: translateY(5px); }
+.tg-node--done    { background: var(--tg-gold);  box-shadow: 0 6px 0 var(--tg-gold-edge); }
+.tg-node--current { background: var(--tg-green); box-shadow: 0 6px 0 var(--tg-green-edge); }
+.tg-node--future  { background: #e5e5e5;         box-shadow: 0 6px 0 #c8c8c8; }
+.tg-node--done:active    { box-shadow: 0 1px 0 var(--tg-gold-edge); }
+.tg-node--current:active { box-shadow: 0 1px 0 var(--tg-green-edge); }
+.tg-node--future:active  { box-shadow: 0 1px 0 #c8c8c8; }
+
+/* ---------- Inputs ---------- */
+.tg-input {
+  width: 100%;
+  border: 2px solid var(--tg-line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 0.7rem 0.9rem;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--tg-ink);
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.tg-input::placeholder { color: #bdbdbd; font-weight: 600; }
+.tg-input:focus { border-color: var(--tg-blue); box-shadow: 0 0 0 4px var(--tg-blue-soft); }
+
+/* ---------- Animations ---------- */
+@keyframes tg-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+.tg-bob { animation: tg-bob 1.8s ease-in-out infinite; }
+
+@keyframes tg-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.tg-pop { animation: tg-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+@keyframes tg-rise {
+  0% { transform: translateY(18px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.tg-rise { animation: tg-rise 0.3s ease both; }
+
+@keyframes tg-toast-in {
+  0% { transform: translateY(-120%); opacity: 0; }
+  15% { transform: translateY(0); opacity: 1; }
+  85% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-120%); opacity: 0; }
+}
+.tg-toast { animation: tg-toast-in 2.4s ease both; }
+
+@keyframes tg-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
+}
+.tg-wiggle { animation: tg-wiggle 0.5s ease-in-out; }
+
+@keyframes tg-confetti-fall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+.tg-confetti {
+  position: fixed;
+  top: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  z-index: 60;
+  pointer-events: none;
+  animation: tg-confetti-fall linear forwards;
+}
+
+/* Hide scrollbars on horizontal strips while keeping scroll */
+.tg-noscroll { scrollbar-width: none; }
+.tg-noscroll::-webkit-scrollbar { display: none; }

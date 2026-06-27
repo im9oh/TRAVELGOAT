@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
+import { useReward } from '../components/toast'
 import type { Expense, ExpenseCategory } from '../types'
 import {
   Card,
@@ -9,7 +10,7 @@ import {
   Field,
   Input,
   Select,
-  ProgressBar,
+  ProgressRing,
   EmptyState,
 } from '../components/ui'
 import { uid, formatMoney, formatDate } from '../lib/format'
@@ -23,7 +24,6 @@ const CATEGORIES: ExpenseCategory[] = [
   'Fees',
   'Other',
 ]
-
 const CAT_ICON: Record<ExpenseCategory, string> = {
   Accommodation: '🏨',
   Transport: '🚆',
@@ -31,29 +31,29 @@ const CAT_ICON: Record<ExpenseCategory, string> = {
   Activities: '🎟️',
   Shopping: '🛍️',
   Fees: '🧾',
-  Other: '•',
+  Other: '✨',
+}
+const CAT_COLOR: Record<ExpenseCategory, string> = {
+  Accommodation: '#1cb0f6',
+  Transport: '#58cc02',
+  Food: '#ff9600',
+  Activities: '#ce82ff',
+  Shopping: '#ff4b4b',
+  Fees: '#afafaf',
+  Other: '#ffc800',
 }
 
 function todayISO() {
   const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
-    d.getDate(),
-  ).padStart(2, '0')}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
-
 function emptyExpense(): Expense {
-  return {
-    id: uid(),
-    date: todayISO(),
-    category: 'Food',
-    description: '',
-    amount: 0,
-    cityId: null,
-  }
+  return { id: uid(), date: todayISO(), category: 'Food', description: '', amount: 0, cityId: null }
 }
 
 export default function Budget() {
   const { state, setState } = useStore()
+  const { reward } = useReward()
   const { expenses, trip, cities } = state
   const cur = trip.homeCurrency
   const [editing, setEditing] = useState<Expense | null>(null)
@@ -65,15 +65,13 @@ export default function Budget() {
 
   const byCategory = useMemo(() => {
     const map = new Map<ExpenseCategory, number>()
-    for (const e of expenses)
-      map.set(e.category, (map.get(e.category) ?? 0) + e.amount)
+    for (const e of expenses) map.set(e.category, (map.get(e.category) ?? 0) + e.amount)
     return CATEGORIES.map((c) => ({ category: c, total: map.get(c) ?? 0 }))
       .filter((x) => x.total > 0)
       .sort((a, b) => b.total - a.total)
   }, [expenses])
 
-  const cityName = (id: string | null) =>
-    cities.find((c) => c.id === id)?.name ?? null
+  const cityName = (id: string | null) => cities.find((c) => c.id === id)?.name ?? null
 
   function openNew() {
     setEditing(emptyExpense())
@@ -85,122 +83,122 @@ export default function Budget() {
   }
   function save() {
     if (!editing) return
-    setState((prev) => {
-      const exists = prev.expenses.some((e) => e.id === editing.id)
-      return {
-        ...prev,
-        expenses: exists
-          ? prev.expenses.map((e) => (e.id === editing.id ? editing : e))
-          : [...prev.expenses, editing],
-      }
-    })
+    const creating = !expenses.some((e) => e.id === editing.id)
+    setState((prev) => ({
+      ...prev,
+      expenses: creating
+        ? [...prev.expenses, editing]
+        : prev.expenses.map((e) => (e.id === editing.id ? editing : e)),
+    }))
+    if (creating) reward(5, '💸')
     setEditing(null)
   }
   function remove(id: string) {
-    setState((prev) => ({
-      ...prev,
-      expenses: prev.expenses.filter((e) => e.id !== id),
-    }))
+    setState((prev) => ({ ...prev, expenses: prev.expenses.filter((e) => e.id !== id) }))
     setEditing(null)
   }
 
   const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date))
+  const overBudget = remaining < 0
 
   return (
     <div>
       <SectionTitle
         title="Budget"
-        subtitle={`${formatMoney(spent, cur)} of ${formatMoney(
-          trip.totalBudget,
-          cur,
-        )}`}
-        action={<Button onClick={openNew}>+ Expense</Button>}
+        subtitle="Log spending, keep the goat happy"
+        action={<Button size="sm" variant="gold" onClick={openNew}>+ Expense</Button>}
       />
 
-      <Card className="mb-4">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-600">
-            {Math.round(pct)}% used
+      {/* Hero ring */}
+      <Card className="mb-4 flex items-center gap-5 bg-gradient-to-b from-[#fffbe9] to-white">
+        <ProgressRing
+          value={pct}
+          size={124}
+          stroke={14}
+          color={overBudget ? '#ff4b4b' : '#ffc800'}
+        >
+          <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#afafaf]">
+            spent
           </span>
-          <span
-            className={`text-sm font-bold ${
-              remaining < 0 ? 'text-red-600' : 'text-teal-700'
-            }`}
-          >
-            {formatMoney(remaining, cur)} {remaining < 0 ? 'over' : 'left'}
+          <span className="text-xl font-black text-[#3c3c3c]">
+            {Math.round(pct)}%
           </span>
+        </ProgressRing>
+        <div className="flex-1">
+          <div className="text-xs font-extrabold uppercase tracking-wide text-[#afafaf]">
+            {overBudget ? 'Over budget' : 'Remaining'}
+          </div>
+          <div className={`text-3xl font-black ${overBudget ? 'text-[#ff4b4b]' : 'text-[#58cc02]'}`}>
+            {formatMoney(Math.abs(remaining), cur)}
+          </div>
+          <div className="mt-1 text-sm font-bold text-[#777]">
+            {formatMoney(spent, cur)} of {formatMoney(trip.totalBudget, cur)}
+          </div>
         </div>
-        <ProgressBar value={pct} />
+      </Card>
 
-        {byCategory.length > 0 && (
-          <div className="mt-4 space-y-2">
+      {/* Category breakdown */}
+      {byCategory.length > 0 && (
+        <Card className="mb-4">
+          <h3 className="mb-3 font-extrabold text-[#3c3c3c]">By category</h3>
+          <div className="space-y-3">
             {byCategory.map((row) => {
               const rowPct = spent > 0 ? (row.total / spent) * 100 : 0
               return (
                 <div key={row.category}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-600">
+                  <div className="mb-1 flex items-center justify-between text-sm font-extrabold">
+                    <span className="text-[#777]">
                       {CAT_ICON[row.category]} {row.category}
                     </span>
-                    <span className="font-medium text-slate-700">
-                      {formatMoney(row.total, cur)}
-                      <span className="ml-1 text-xs text-slate-400">
-                        {Math.round(rowPct)}%
-                      </span>
-                    </span>
+                    <span className="text-[#3c3c3c]">{formatMoney(row.total, cur)}</span>
                   </div>
-                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-3 w-full overflow-hidden rounded-full bg-[#eee]">
                     <div
-                      className="h-full rounded-full bg-teal-400"
-                      style={{ width: `${rowPct}%` }}
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${rowPct}%`, background: CAT_COLOR[row.category] }}
                     />
                   </div>
                 </div>
               )
             })}
           </div>
-        )}
-      </Card>
+        </Card>
+      )}
 
       {sorted.length === 0 ? (
-        <EmptyState
-          icon="💶"
-          title="No expenses yet"
-          hint="Log spending as you go to keep an eye on the budget."
-        />
+        <EmptyState icon="💰" title="No expenses yet" hint="Log spending as you go — each one earns XP!" />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {sorted.map((e) => (
-            <button
-              key={e.id}
-              onClick={() => openEdit(e)}
-              className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-sm transition hover:border-teal-300"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-lg">{CAT_ICON[e.category]}</span>
-                <div>
-                  <div className="font-semibold text-slate-800">
-                    {e.description || e.category}
-                  </div>
-                  <div className="text-xs text-slate-500">
-                    {formatDate(e.date)}
-                    {cityName(e.cityId) && ` · ${cityName(e.cityId)}`}
+            <Card key={e.id} onClick={() => openEdit(e)} className="!p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-lg"
+                    style={{ background: CAT_COLOR[e.category] + '22' }}
+                  >
+                    {CAT_ICON[e.category]}
+                  </span>
+                  <div>
+                    <div className="font-extrabold text-[#3c3c3c]">
+                      {e.description || e.category}
+                    </div>
+                    <div className="text-xs font-bold text-[#afafaf]">
+                      {formatDate(e.date)}
+                      {cityName(e.cityId) && ` · ${cityName(e.cityId)}`}
+                    </div>
                   </div>
                 </div>
+                <div className="text-lg font-black text-[#3c3c3c]">
+                  {formatMoney(e.amount, cur)}
+                </div>
               </div>
-              <div className="font-bold text-slate-900">
-                {formatMoney(e.amount, cur)}
-              </div>
-            </button>
+            </Card>
           ))}
         </div>
       )}
 
-      <Modal
-        open={!!editing}
-        onClose={() => setEditing(null)}
-        title={isNew ? 'Add expense' : 'Edit expense'}
-      >
+      <Modal open={!!editing} onClose={() => setEditing(null)} title={isNew ? 'Add expense' : 'Edit expense'}>
         {editing && (
           <div className="space-y-3">
             <Field label={`Amount (${cur})`}>
@@ -208,21 +206,14 @@ export default function Budget() {
                 type="number"
                 inputMode="decimal"
                 value={editing.amount || ''}
-                onChange={(e) =>
-                  setEditing({
-                    ...editing,
-                    amount: parseFloat(e.target.value) || 0,
-                  })
-                }
+                onChange={(e) => setEditing({ ...editing, amount: parseFloat(e.target.value) || 0 })}
                 placeholder="0.00"
               />
             </Field>
             <Field label="Description">
               <Input
                 value={editing.description}
-                onChange={(e) =>
-                  setEditing({ ...editing, description: e.target.value })
-                }
+                onChange={(e) => setEditing({ ...editing, description: e.target.value })}
                 placeholder="Dinner, museum ticket…"
               />
             </Field>
@@ -230,17 +221,10 @@ export default function Budget() {
               <Field label="Category">
                 <Select
                   value={editing.category}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      category: e.target.value as ExpenseCategory,
-                    })
-                  }
+                  onChange={(e) => setEditing({ ...editing, category: e.target.value as ExpenseCategory })}
                 >
                   {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
+                    <option key={c} value={c}>{c}</option>
                   ))}
                 </Select>
               </Field>
@@ -248,44 +232,30 @@ export default function Budget() {
                 <Input
                   type="date"
                   value={editing.date}
-                  onChange={(e) =>
-                    setEditing({ ...editing, date: e.target.value })
-                  }
+                  onChange={(e) => setEditing({ ...editing, date: e.target.value })}
                 />
               </Field>
             </div>
             <Field label="City (optional)">
               <Select
                 value={editing.cityId ?? ''}
-                onChange={(e) =>
-                  setEditing({
-                    ...editing,
-                    cityId: e.target.value || null,
-                  })
-                }
+                onChange={(e) => setEditing({ ...editing, cityId: e.target.value || null })}
               >
                 <option value="">— None —</option>
                 {cities.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </Select>
             </Field>
-
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-1">
               {!isNew ? (
-                <Button variant="danger" onClick={() => remove(editing.id)}>
-                  Delete
-                </Button>
+                <Button variant="ghost" onClick={() => remove(editing.id)}>🗑 Delete</Button>
               ) : (
                 <span />
               )}
               <div className="flex gap-2">
-                <Button variant="subtle" onClick={() => setEditing(null)}>
-                  Cancel
-                </Button>
-                <Button onClick={save}>Save</Button>
+                <Button variant="white" onClick={() => setEditing(null)}>Cancel</Button>
+                <Button variant="gold" onClick={save}>Save</Button>
               </div>
             </div>
           </div>

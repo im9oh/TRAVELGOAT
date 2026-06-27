@@ -2,18 +2,17 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import type { City, TransportMode } from '../types'
 import {
-  Card,
-  SectionTitle,
   Button,
   Modal,
   Field,
   Input,
   Textarea,
   Select,
-  Badge,
-  EmptyState,
+  Mascot,
+  SpeechBubble,
 } from '../components/ui'
-import { uid, formatDate, nightsBetween, daysUntil } from '../lib/format'
+import { uid, formatDate, nightsBetween } from '../lib/format'
+import { todayISO } from '../lib/game'
 
 const MODE_ICON: Record<TransportMode, string> = {
   train: '🚆',
@@ -24,16 +23,33 @@ const MODE_ICON: Record<TransportMode, string> = {
   walk: '🚶',
   other: '➡️',
 }
+const MODES: TransportMode[] = ['train', 'plane', 'bus', 'car', 'ferry', 'walk', 'other']
 
-const MODES: TransportMode[] = [
-  'train',
-  'plane',
-  'bus',
-  'car',
-  'ferry',
-  'walk',
-  'other',
-]
+const FLAGS: Record<string, string> = {
+  'united kingdom': '🇬🇧',
+  uk: '🇬🇧',
+  england: '🇬🇧',
+  france: '🇫🇷',
+  netherlands: '🇳🇱',
+  germany: '🇩🇪',
+  czechia: '🇨🇿',
+  'czech republic': '🇨🇿',
+  austria: '🇦🇹',
+  italy: '🇮🇹',
+  spain: '🇪🇸',
+  portugal: '🇵🇹',
+  greece: '🇬🇷',
+  switzerland: '🇨🇭',
+  belgium: '🇧🇪',
+  poland: '🇵🇱',
+  hungary: '🇭🇺',
+  croatia: '🇭🇷',
+  ireland: '🇮🇪',
+  norway: '🇳🇴',
+  sweden: '🇸🇪',
+  denmark: '🇩🇰',
+}
+const flagFor = (country: string) => FLAGS[country.trim().toLowerCase()] ?? '📍'
 
 function emptyCity(): City {
   return {
@@ -50,6 +66,8 @@ function emptyCity(): City {
   }
 }
 
+type Status = 'done' | 'current' | 'future'
+
 export default function Itinerary() {
   const { state, setState } = useStore()
   const [editing, setEditing] = useState<City | null>(null)
@@ -58,6 +76,15 @@ export default function Itinerary() {
   const sorted = [...state.cities].sort((a, b) =>
     a.arrival.localeCompare(b.arrival),
   )
+  const today = todayISO()
+  const firstUpcoming = sorted.findIndex((c) => c.departure >= today)
+
+  const statusOf = (i: number, c: City): Status => {
+    if (c.departure && c.departure < today) return 'done'
+    if (i === firstUpcoming || (firstUpcoming === -1 && i === sorted.length - 1))
+      return 'current'
+    return 'future'
+  }
 
   function openNew() {
     setEditing(emptyCity())
@@ -95,92 +122,119 @@ export default function Itinerary() {
 
   return (
     <div>
-      <SectionTitle
-        title="Itinerary"
-        subtitle={`${sorted.length} stops · ${totalNights} nights`}
-        action={<Button onClick={openNew}>+ Add stop</Button>}
-      />
+      <div className="mb-5 flex items-end justify-between">
+        <div>
+          <h2 className="text-2xl font-extrabold text-[#3c3c3c]">Your Journey</h2>
+          <p className="text-sm font-bold text-[#afafaf]">
+            {sorted.length} stops · {totalNights} nights
+          </p>
+        </div>
+        <Button size="sm" variant="green" onClick={openNew}>
+          + Stop
+        </Button>
+      </div>
 
       {sorted.length === 0 ? (
-        <EmptyState
-          icon="🗺️"
-          title="No stops yet"
-          hint="Add your first city to start building the route."
-        />
+        <div className="flex flex-col items-center gap-4 py-10 text-center">
+          <Mascot size={90} bob />
+          <p className="text-lg font-extrabold text-[#4b4b4b]">
+            Let's plot your route!
+          </p>
+          <Button variant="green" onClick={openNew}>
+            Add your first stop
+          </Button>
+        </div>
       ) : (
-        <ol className="relative space-y-3">
+        <div className="relative flex flex-col items-center gap-1 pb-6">
           {sorted.map((city, i) => {
-            const next = sorted[i + 1]
-            const d = daysUntil(city.arrival)
+            const status = statusOf(i, city)
+            // winding offset
+            const offset = Math.round(Math.sin(i * 0.9) * 88)
+            const nodeClass =
+              status === 'done'
+                ? 'tg-node--done'
+                : status === 'current'
+                  ? 'tg-node--current'
+                  : 'tg-node--future'
             return (
-              <li key={city.id}>
-                <Card>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white">
-                        {i + 1}
-                      </div>
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-lg font-bold text-slate-900">
-                            {city.name || 'Untitled'}
-                          </h3>
-                          <span className="text-sm text-slate-500">
-                            {city.country}
-                          </span>
-                          {d > 0 && d <= 30 && (
-                            <Badge color="teal">in {d}d</Badge>
-                          )}
-                        </div>
-                        <div className="mt-0.5 text-sm text-slate-600">
-                          {formatDate(city.arrival)} →{' '}
-                          {formatDate(city.departure)}
-                          <span className="ml-2 font-medium text-slate-500">
-                            {nightsBetween(city.arrival, city.departure)} nights
-                          </span>
-                        </div>
-                        {city.accommodation && (
-                          <div className="mt-1 text-sm text-slate-600">
-                            🏨 {city.accommodation}
-                          </div>
-                        )}
-                        {city.notes && (
-                          <p className="mt-1 text-sm text-slate-500">
-                            {city.notes}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <Button variant="ghost" onClick={() => openEdit(city)}>
-                      Edit
-                    </Button>
-                  </div>
-                </Card>
-
-                {next && (
-                  <div className="flex items-center gap-2 py-2 pl-7 text-sm text-slate-500">
-                    <span className="text-base">
-                      {MODE_ICON[city.transportMode]}
-                    </span>
-                    <span className="capitalize">{city.transportMode}</span>
-                    <span className="text-slate-300">to {next.name}</span>
-                    {city.transportDetails && (
-                      <span className="text-slate-400">
-                        · {city.transportDetails}
-                      </span>
-                    )}
+              <div key={city.id} className="flex w-full flex-col items-center">
+                {/* transport from previous stop */}
+                {i > 0 && (
+                  <div className="py-1 text-xl opacity-70">
+                    {MODE_ICON[sorted[i - 1].transportMode]}
                   </div>
                 )}
-              </li>
+
+                <div
+                  className="relative flex items-center"
+                  style={{ transform: `translateX(${offset}px)` }}
+                >
+                  {/* mascot beside the current node */}
+                  {status === 'current' && (
+                    <div className="absolute right-full mr-2 hidden sm:block">
+                      <Mascot size={56} bob />
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => openEdit(city)}
+                    className={`tg-node ${nodeClass} ${status === 'current' ? 'tg-bob' : ''}`}
+                    aria-label={city.name}
+                  >
+                    {status === 'done' ? '✓' : flagFor(city.country)}
+                    {status === 'current' && (
+                      <span className="absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-[#58cc02] shadow-[0_2px_0_#e5e5e5]">
+                        {i === 0 ? 'Start' : 'Next'}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {/* label */}
+                <div
+                  className="mt-1.5 flex flex-col items-center"
+                  style={{ transform: `translateX(${offset}px)` }}
+                >
+                  <span className="text-sm font-extrabold text-[#3c3c3c]">
+                    {city.name || 'Untitled'}
+                  </span>
+                  <span className="text-[11px] font-bold text-[#afafaf]">
+                    {formatDate(city.arrival, { month: 'short', day: 'numeric' })}
+                    {' · '}
+                    {nightsBetween(city.arrival, city.departure)}n
+                  </span>
+                </div>
+              </div>
             )
           })}
-        </ol>
+
+          {/* finish line */}
+          <div className="mt-3 flex flex-col items-center">
+            <div className="text-3xl">🏁</div>
+            <span className="text-xs font-extrabold uppercase tracking-wide text-[#afafaf]">
+              Trip complete
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* tip */}
+      {sorted.length > 0 && (
+        <div className="mt-2 flex items-start gap-2">
+          <Mascot size={44} />
+          <div className="flex-1">
+            <SpeechBubble>
+              Tap any stop to add your hotel, transport, and notes. Filling these
+              in raises your readiness! 🎒
+            </SpeechBubble>
+          </div>
+        </div>
       )}
 
       <Modal
         open={!!editing}
         onClose={() => setEditing(null)}
-        title={isNew ? 'Add stop' : 'Edit stop'}
+        title={isNew ? 'Add stop' : editing?.name || 'Edit stop'}
       >
         {editing && (
           <div className="space-y-3">
@@ -188,9 +242,7 @@ export default function Itinerary() {
               <Field label="City">
                 <Input
                   value={editing.name}
-                  onChange={(e) =>
-                    setEditing({ ...editing, name: e.target.value })
-                  }
+                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
                   placeholder="Paris"
                 />
               </Field>
@@ -234,7 +286,7 @@ export default function Itinerary() {
               />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Transport to next stop">
+              <Field label="Transport to next">
                 <Select
                   value={editing.transportMode}
                   onChange={(e) =>
@@ -255,12 +307,9 @@ export default function Itinerary() {
                 <Input
                   value={editing.transportDetails}
                   onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      transportDetails: e.target.value,
-                    })
+                    setEditing({ ...editing, transportDetails: e.target.value })
                   }
-                  placeholder="09:30, ref ABC123"
+                  placeholder="09:30, ref ABC"
                 />
               </Field>
             </div>
@@ -268,26 +317,26 @@ export default function Itinerary() {
               <Textarea
                 rows={3}
                 value={editing.notes}
-                onChange={(e) =>
-                  setEditing({ ...editing, notes: e.target.value })
-                }
-                placeholder="Anything to remember about this stop"
+                onChange={(e) => setEditing({ ...editing, notes: e.target.value })}
+                placeholder="Anything to remember"
               />
             </Field>
 
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-1">
               {!isNew ? (
-                <Button variant="danger" onClick={() => remove(editing.id)}>
-                  Delete
+                <Button variant="ghost" onClick={() => remove(editing.id)}>
+                  🗑 Delete
                 </Button>
               ) : (
                 <span />
               )}
               <div className="flex gap-2">
-                <Button variant="subtle" onClick={() => setEditing(null)}>
+                <Button variant="white" onClick={() => setEditing(null)}>
                   Cancel
                 </Button>
-                <Button onClick={save}>Save</Button>
+                <Button variant="green" onClick={save}>
+                  Save
+                </Button>
               </div>
             </div>
           </div>

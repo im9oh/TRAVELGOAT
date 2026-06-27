@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore } from './store'
 import { daysUntil } from './lib/format'
+import { computeXp, levelFromXp } from './lib/game'
 import Dashboard from './views/Dashboard'
 import Itinerary from './views/Itinerary'
 import Budget from './views/Budget'
@@ -20,21 +21,19 @@ export type TabKey =
   | 'docs'
   | 'settings'
 
-const TABS: { key: TabKey; label: string; icon: string }[] = [
+const BOTTOM: { key: TabKey; label: string; icon: string }[] = [
   { key: 'dashboard', label: 'Home', icon: '🏠' },
-  { key: 'itinerary', label: 'Itinerary', icon: '🗺️' },
-  { key: 'budget', label: 'Budget', icon: '💶' },
+  { key: 'itinerary', label: 'Journey', icon: '🗺️' },
+  { key: 'budget', label: 'Budget', icon: '💰' },
   { key: 'places', label: 'Places', icon: '📍' },
-  { key: 'packing', label: 'Packing', icon: '🎒' },
-  { key: 'journal', label: 'Journal', icon: '📔' },
-  { key: 'docs', label: 'Docs', icon: '📄' },
-  { key: 'settings', label: 'Settings', icon: '⚙️' },
+  { key: 'packing', label: 'Pack', icon: '🎒' },
 ]
 
 export default function App() {
   const [tab, setTab] = useState<TabKey>('dashboard')
   const { state } = useStore()
   const countdown = daysUntil(state.trip.startDate)
+  const { level } = levelFromXp(computeXp(state))
 
   function render() {
     switch (tab) {
@@ -58,72 +57,92 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-full bg-slate-50 text-slate-900">
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
+    <div className="min-h-full">
+      {/* Top stat bar */}
+      <header className="sticky top-0 z-30 border-b-2 border-[#eee] bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-2.5">
+          <button
+            onClick={() => setTab('dashboard')}
+            className="flex items-center gap-1.5"
+          >
             <span className="text-2xl">🐐</span>
-            <div className="leading-tight">
-              <div className="text-base font-extrabold tracking-tight">
-                TravelGoat
-              </div>
-              <div className="text-xs text-slate-500">{state.trip.name}</div>
-            </div>
-          </div>
-          {countdown > 0 ? (
-            <div className="rounded-full bg-teal-50 px-3 py-1 text-right">
-              <span className="text-sm font-bold text-teal-700">
-                {countdown}
-              </span>
-              <span className="ml-1 text-xs text-teal-600">days to go</span>
-            </div>
-          ) : countdown <= 0 ? (
-            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-              Trip in progress ✈️
+            <span className="text-lg font-extrabold tracking-tight text-[#3c3c3c]">
+              TravelGoat
             </span>
-          ) : null}
-        </div>
-
-        {/* Desktop tabs */}
-        <nav className="mx-auto hidden max-w-5xl gap-1 overflow-x-auto px-2 pb-1 sm:flex">
-          {TABS.map((t) => (
+          </button>
+          <div className="flex items-center gap-3.5">
+            <Stat icon="🔥" value={state.game.streak} color="#ff9600" />
+            <Stat icon="💎" value={level} color="#1cb0f6" />
+            {countdown > 0 ? (
+              <Stat icon="📅" value={countdown} color="#58cc02" />
+            ) : (
+              <span className="text-lg">✈️</span>
+            )}
             <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                tab === t.key
-                  ? 'bg-teal-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
+              onClick={() => setTab('settings')}
+              className="text-xl text-[#afafaf] hover:text-[#777]"
+              aria-label="Settings"
             >
-              <span>{t.icon}</span>
-              {t.label}
+              ⚙️
             </button>
-          ))}
-        </nav>
+          </div>
+        </div>
       </header>
 
       {/* Content */}
-      <main className="mx-auto max-w-5xl px-4 pb-28 pt-5 sm:pb-10">{render()}</main>
+      <main className="mx-auto max-w-2xl px-4 pb-28 pt-5 sm:pb-10">
+        {render()}
+      </main>
 
-      {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur sm:hidden">
-        <div className="mx-auto grid max-w-5xl grid-cols-7">
-          {TABS.filter((t) => t.key !== 'settings').map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition ${
-                tab === t.key ? 'text-teal-700' : 'text-slate-500'
-              }`}
-            >
-              <span className="text-lg">{t.icon}</span>
-              {t.label}
-            </button>
-          ))}
+      {/* Bottom nav */}
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-[#eee] bg-white">
+        <div className="mx-auto grid max-w-2xl grid-cols-5">
+          {BOTTOM.map((t) => {
+            const active = tab === t.key
+            return (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className="flex flex-col items-center gap-0.5 py-2"
+              >
+                <span
+                  className={`flex h-11 w-14 items-center justify-center rounded-2xl text-2xl transition ${
+                    active ? 'bg-[#ddf4ff]' : ''
+                  }`}
+                >
+                  {t.icon}
+                </span>
+                <span
+                  className={`text-[10px] font-extrabold uppercase tracking-wide ${
+                    active ? 'text-[#1cb0f6]' : 'text-[#afafaf]'
+                  }`}
+                >
+                  {t.label}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </nav>
+    </div>
+  )
+}
+
+function Stat({
+  icon,
+  value,
+  color,
+}: {
+  icon: string
+  value: number
+  color: string
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <span className="text-lg leading-none">{icon}</span>
+      <span className="text-base font-extrabold" style={{ color }}>
+        {value}
+      </span>
     </div>
   )
 }

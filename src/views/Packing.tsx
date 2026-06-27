@@ -1,17 +1,20 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
+import { useReward } from '../components/toast'
 import type { PackingItem } from '../types'
 import {
+  Card,
   SectionTitle,
   Button,
   Input,
-  ProgressBar,
+  ProgressRing,
   EmptyState,
 } from '../components/ui'
 import { uid } from '../lib/format'
 
 export default function Packing() {
   const { state, setState } = useStore()
+  const { reward, cheer, celebrate } = useReward()
   const { packing } = state
   const [name, setName] = useState('')
   const [category, setCategory] = useState('Essentials')
@@ -46,45 +49,47 @@ export default function Packing() {
     }))
     setName('')
   }
-  function toggle(id: string) {
+  function toggle(item: PackingItem) {
+    const willPack = !item.packed
+    const willAllBePacked = willPack && packed + 1 === packing.length
     setState((prev) => ({
       ...prev,
-      packing: prev.packing.map((p) =>
-        p.id === id ? { ...p, packed: !p.packed } : p,
-      ),
+      packing: prev.packing.map((p) => (p.id === item.id ? { ...p, packed: willPack } : p)),
     }))
+    if (willPack) reward(10, '🎒')
+    if (willAllBePacked) {
+      cheer('All packed! Bon voyage!', '🧳')
+      celebrate()
+    }
   }
   function remove(id: string) {
-    setState((prev) => ({
-      ...prev,
-      packing: prev.packing.filter((p) => p.id !== id),
-    }))
+    setState((prev) => ({ ...prev, packing: prev.packing.filter((p) => p.id !== id) }))
   }
   function clearPacked() {
-    setState((prev) => ({
-      ...prev,
-      packing: prev.packing.map((p) => ({ ...p, packed: false })),
-    }))
+    setState((prev) => ({ ...prev, packing: prev.packing.map((p) => ({ ...p, packed: false })) }))
   }
 
   return (
     <div>
       <SectionTitle
         title="Packing"
-        subtitle={`${packed}/${packing.length} packed`}
-        action={
-          packed > 0 ? (
-            <Button variant="subtle" onClick={clearPacked}>
-              Reset
-            </Button>
-          ) : undefined
-        }
+        subtitle="Check it off, earn XP"
+        action={packed > 0 ? <Button size="sm" variant="white" onClick={clearPacked}>Reset</Button> : undefined}
       />
 
       {packing.length > 0 && (
-        <div className="mb-4">
-          <ProgressBar value={pct} />
-        </div>
+        <Card className="mb-5 flex items-center gap-5 bg-gradient-to-b from-[#f3fff0] to-white">
+          <ProgressRing value={pct} size={108} stroke={13} color="#58cc02">
+            <span className="text-xl font-black text-[#3c3c3c]">{packed}/{packing.length}</span>
+            <span className="text-[10px] font-extrabold uppercase text-[#afafaf]">packed</span>
+          </ProgressRing>
+          <div className="flex-1">
+            <div className="text-lg font-extrabold text-[#3c3c3c]">
+              {pct >= 100 ? 'Ready to go! 🧳' : `${packing.length - packed} to pack`}
+            </div>
+            <p className="text-sm font-bold text-[#afafaf]">Every item is 10 XP.</p>
+          </div>
+        </Card>
       )}
 
       {/* Add row */}
@@ -105,7 +110,7 @@ export default function Packing() {
             className="sm:w-40"
             list="packing-categories"
           />
-          <Button onClick={add}>Add</Button>
+          <Button variant="green" onClick={add}>Add</Button>
         </div>
         <datalist id="packing-categories">
           {categories.map((c) => (
@@ -115,11 +120,7 @@ export default function Packing() {
       </div>
 
       {packing.length === 0 ? (
-        <EmptyState
-          icon="🎒"
-          title="Packing list is empty"
-          hint="Add what you need to bring, grouped by category."
-        />
+        <EmptyState icon="🎒" title="Packing list is empty" hint="Add what you need to bring, grouped by category." />
       ) : (
         <div className="space-y-5">
           {grouped.map(([cat, items]) => {
@@ -127,49 +128,41 @@ export default function Packing() {
             return (
               <div key={cat}>
                 <div className="mb-2 flex items-center justify-between">
-                  <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-                    {cat}
-                  </h3>
-                  <span className="text-xs text-slate-400">
-                    {catPacked}/{items.length}
-                  </span>
+                  <h3 className="text-sm font-extrabold uppercase tracking-wide text-[#afafaf]">{cat}</h3>
+                  <span className="text-xs font-extrabold text-[#cfcfcf]">{catPacked}/{items.length}</span>
                 </div>
-                <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <div className="space-y-2">
                   {items.map((item) => (
-                    <li
+                    <div
                       key={item.id}
-                      className="group flex items-center gap-3 px-3 py-2.5"
+                      className="tg-card group flex items-center gap-3 !rounded-2xl px-3 py-2.5"
                     >
                       <button
-                        onClick={() => toggle(item.id)}
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 text-xs ${
+                        onClick={() => toggle(item)}
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-black transition ${
                           item.packed
-                            ? 'border-teal-600 bg-teal-600 text-white'
-                            : 'border-slate-300'
+                            ? 'bg-[#58cc02] text-white shadow-[0_2px_0_#58a700]'
+                            : 'border-2 border-[#e5e5e5] text-transparent'
                         }`}
                         aria-label="Toggle packed"
                       >
-                        {item.packed && '✓'}
+                        ✓
                       </button>
                       <span
-                        className={`flex-1 text-sm ${
-                          item.packed
-                            ? 'text-slate-400 line-through'
-                            : 'text-slate-800'
-                        }`}
+                        className={`flex-1 font-bold ${item.packed ? 'text-[#cfcfcf] line-through' : 'text-[#3c3c3c]'}`}
                       >
                         {item.name}
                       </span>
                       <button
                         onClick={() => remove(item.id)}
-                        className="text-slate-300 opacity-0 transition hover:text-red-500 group-hover:opacity-100"
+                        className="text-[#d5d5d5] opacity-0 transition hover:text-[#ff4b4b] group-hover:opacity-100"
                         aria-label="Remove"
                       >
                         ✕
                       </button>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )
           })}

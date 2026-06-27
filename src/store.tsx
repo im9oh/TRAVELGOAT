@@ -67,6 +67,7 @@ function seed(): AppState {
     ],
     journal: [],
     docs: [],
+    game: { streak: 0, bestStreak: 0, lastCheckIn: null },
   }
 }
 
@@ -76,7 +77,14 @@ function load(): AppState {
     if (raw) {
       const parsed = JSON.parse(raw) as AppState
       // shallow validation
-      if (parsed && parsed.trip && Array.isArray(parsed.cities)) return parsed
+      if (parsed && parsed.trip && Array.isArray(parsed.cities)) {
+        // merge defaults for forward-compatibility with older saves
+        return {
+          ...seed(),
+          ...parsed,
+          game: parsed.game ?? { streak: 0, bestStreak: 0, lastCheckIn: null },
+        }
+      }
     }
   } catch {
     // ignore corrupt storage

@@ -95,6 +95,12 @@ export interface TravelDoc {
   notes: string
 }
 
+export interface GameState {
+  streak: number
+  bestStreak: number
+  lastCheckIn: string | null // yyyy-mm-dd
+}
+
 export interface AppState {
   trip: Trip
   cities: City[]
@@ -103,4 +109,5 @@ export interface AppState {
   packing: PackingItem[]
   journal: JournalEntry[]
   docs: TravelDoc[]
+  game: GameState
 }
