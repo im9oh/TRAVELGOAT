@@ -57,9 +57,11 @@ export function computeXp(s: AppState): number {
 }
 
 /** Trip-readiness meter (0-100) — how prepared you are to go. */
+export type ReadinessKey = 'packing' | 'stays' | 'docs' | 'places'
+
 export function computeReadiness(s: AppState): {
   pct: number
-  parts: { label: string; pct: number; icon: string }[]
+  parts: { label: string; pct: number; key: ReadinessKey }[]
 } {
   const cityCount = Math.max(1, s.cities.length)
 
@@ -71,11 +73,11 @@ export function computeReadiness(s: AppState): {
   const docsPct = Math.min(100, (s.docs.length / 3) * 100)
   const placesPct = Math.min(100, (s.places.length / (cityCount * 2)) * 100)
 
-  const parts = [
-    { label: 'Packing', pct: packedPct, icon: '🎒' },
-    { label: 'Stays booked', pct: staysPct, icon: '🛏️' },
-    { label: 'Documents', pct: docsPct, icon: '📄' },
-    { label: 'Places to see', pct: placesPct, icon: '📍' },
+  const parts: { label: string; pct: number; key: ReadinessKey }[] = [
+    { label: 'Packing', pct: packedPct, key: 'packing' },
+    { label: 'Stays booked', pct: staysPct, key: 'stays' },
+    { label: 'Documents', pct: docsPct, key: 'docs' },
+    { label: 'Places to see', pct: placesPct, key: 'places' },
   ]
   const pct = Math.round(
     parts.reduce((sum, p) => sum + p.pct, 0) / parts.length,
@@ -83,10 +85,21 @@ export function computeReadiness(s: AppState): {
   return { pct, parts }
 }
 
+export type AchievementIcon =
+  | 'footsteps'
+  | 'globe'
+  | 'bed'
+  | 'backpack'
+  | 'compass'
+  | 'fork'
+  | 'book'
+  | 'coins'
+  | 'flame'
+
 export interface Achievement {
   id: string
   title: string
-  emoji: string
+  icon: AchievementIcon
   desc: string
   done: boolean
   progress: number // 0..1
@@ -101,29 +114,29 @@ export function computeAchievements(s: AppState): Achievement[] {
   const mk = (
     id: string,
     title: string,
-    emoji: string,
+    icon: AchievementIcon,
     desc: string,
     have: number,
     need: number,
   ): Achievement => ({
     id,
     title,
-    emoji,
+    icon,
     desc,
     done: have >= need,
     progress: Math.min(1, have / need),
   })
 
   return [
-    mk('first-steps', 'First Steps', '👣', 'Add your first city', s.cities.length, 1),
-    mk('globetrotter', 'Globetrotter', '🌍', 'Plan 10 cities', s.cities.length, 10),
-    mk('homebody', 'All Booked', '🛏️', 'Book every stay', stays, Math.max(1, s.cities.length)),
-    mk('packed', 'Ready to Roll', '🎒', 'Pack 15 items', packed, 15),
-    mk('explorer', 'Explorer', '🧭', 'Visit 10 places', visited, 10),
-    mk('foodie', 'Bon Appétit', '🍽️', 'Save 5 food spots', s.places.filter((p) => p.category === 'Food').length, 5),
-    mk('scribe', 'Storyteller', '📔', 'Write 5 journal entries', s.journal.length, 5),
-    mk('accountant', 'Budget Boss', '💰', 'Log 15 expenses', s.expenses.length, 15),
-    mk('streak7', 'On Fire', '🔥', 'Reach a 7-day streak', streak, 7),
+    mk('first-steps', 'First Steps', 'footsteps', 'Add your first city', s.cities.length, 1),
+    mk('globetrotter', 'Globetrotter', 'globe', 'Plan 10 cities', s.cities.length, 10),
+    mk('homebody', 'All Booked', 'bed', 'Book every stay', stays, Math.max(1, s.cities.length)),
+    mk('packed', 'Ready to Roll', 'backpack', 'Pack 15 items', packed, 15),
+    mk('explorer', 'Explorer', 'compass', 'Visit 10 places', visited, 10),
+    mk('foodie', 'Bon Appétit', 'fork', 'Save 5 food spots', s.places.filter((p) => p.category === 'Food').length, 5),
+    mk('scribe', 'Storyteller', 'book', 'Write 5 journal entries', s.journal.length, 5),
+    mk('accountant', 'Budget Boss', 'coins', 'Log 15 expenses', s.expenses.length, 15),
+    mk('streak7', 'On Fire', 'flame', 'Reach a 7-day streak', streak, 7),
   ]
 }
 

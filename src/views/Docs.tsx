@@ -14,16 +14,27 @@ import {
   Badge,
   EmptyState,
 } from '../components/ui'
+import {
+  PassportIcon,
+  DocIcon,
+  BedIcon,
+  ShieldIcon,
+  TicketIcon,
+  LockIcon,
+  PlusIcon,
+  TrashIcon,
+  type IconProps,
+} from '../components/icons'
 import { uid, formatDate, daysUntil } from '../lib/format'
 
 const TYPES: DocType[] = ['Passport', 'Visa', 'Booking', 'Insurance', 'Ticket', 'Other']
-const TYPE_ICON: Record<DocType, string> = {
-  Passport: '🛂',
-  Visa: '📑',
-  Booking: '🏨',
-  Insurance: '🛡️',
-  Ticket: '🎫',
-  Other: '📄',
+const TYPE_ICON: Record<DocType, (p: IconProps) => JSX.Element> = {
+  Passport: PassportIcon,
+  Visa: DocIcon,
+  Booking: BedIcon,
+  Insurance: ShieldIcon,
+  Ticket: TicketIcon,
+  Other: DocIcon,
 }
 
 function emptyDoc(): TravelDoc {
@@ -56,11 +67,9 @@ export default function Docs() {
     const creating = !docs.some((d) => d.id === editing.id)
     setState((prev) => ({
       ...prev,
-      docs: creating
-        ? [...prev.docs, editing]
-        : prev.docs.map((d) => (d.id === editing.id ? editing : d)),
+      docs: creating ? [...prev.docs, editing] : prev.docs.map((d) => (d.id === editing.id ? editing : d)),
     }))
-    if (creating) reward(15, '📄')
+    if (creating) reward(15, <DocIcon size={18} />)
     setEditing(null)
   }
   function remove(id: string) {
@@ -73,26 +82,36 @@ export default function Docs() {
       <SectionTitle
         title="Docs & logistics"
         subtitle="Bookings, refs & key dates"
-        action={<Button size="sm" variant="blue" onClick={openNew}>+ Doc</Button>}
+        action={
+          <Button size="sm" variant="blue" onClick={openNew}>
+            <PlusIcon size={16} /> Doc
+          </Button>
+        }
       />
 
-      <div className="mb-4 rounded-2xl bg-[#fff4d6] px-4 py-3 text-sm font-bold text-[#a07400]">
-        🔒 Stored only in this browser. Don't save full passport numbers or
-        secrets here.
+      <div className="mb-4 flex items-center gap-2 rounded-2xl bg-[#fff4d6] px-4 py-3 text-sm font-bold text-[#a07400]">
+        <LockIcon size={18} className="shrink-0" />
+        Stored only in this browser. Don't save full passport numbers or secrets here.
       </div>
 
       {sorted.length === 0 ? (
-        <EmptyState icon="📄" title="No documents yet" hint="Track confirmation numbers, expiry dates, and key references." />
+        <EmptyState
+          icon={<DocIcon size={48} strokeWidth={2} />}
+          title="No documents yet"
+          hint="Track confirmation numbers, expiry dates, and key references."
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {sorted.map((d) => {
+            const Icon = TYPE_ICON[d.type]
             const until = d.date ? daysUntil(d.date) : null
             const expSoon = d.type === 'Passport' && until !== null && until < 180
             return (
               <Card key={d.id} onClick={() => openEdit(d)} className="!p-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-extrabold text-[#3c3c3c]">
-                    {TYPE_ICON[d.type]} {d.title || 'Untitled'}
+                  <h3 className="flex items-center gap-1.5 font-extrabold text-[#3c3c3c]">
+                    <Icon size={18} strokeWidth={2.4} className="text-[#a568cc]" />
+                    {d.title || 'Untitled'}
                   </h3>
                   <Badge color="purple">{d.type}</Badge>
                 </div>
@@ -104,7 +123,7 @@ export default function Docs() {
                 {d.date && (
                   <div className="mt-1.5 text-sm font-bold text-[#afafaf]">
                     {formatDate(d.date)}
-                    {expSoon && <span className="ml-2 font-extrabold text-[#ff4b4b]">⚠ check validity</span>}
+                    {expSoon && <span className="ml-2 font-extrabold text-[#ff4b4b]">check validity</span>}
                   </div>
                 )}
                 {d.notes && <p className="mt-1 text-sm font-bold text-[#afafaf]">{d.notes}</p>}
@@ -119,47 +138,30 @@ export default function Docs() {
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Title">
-                <Input
-                  value={editing.title}
-                  onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-                  placeholder="Flight to London"
-                />
+                <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} placeholder="Flight to London" />
               </Field>
               <Field label="Type">
-                <Select
-                  value={editing.type}
-                  onChange={(e) => setEditing({ ...editing, type: e.target.value as DocType })}
-                >
+                <Select value={editing.type} onChange={(e) => setEditing({ ...editing, type: e.target.value as DocType })}>
                   {TYPES.map((t) => (
-                    <option key={t} value={t}>{TYPE_ICON[t]} {t}</option>
+                    <option key={t} value={t}>{t}</option>
                   ))}
                 </Select>
               </Field>
             </div>
             <Field label="Reference / confirmation">
-              <Input
-                value={editing.reference}
-                onChange={(e) => setEditing({ ...editing, reference: e.target.value })}
-                placeholder="ABC123"
-              />
+              <Input value={editing.reference} onChange={(e) => setEditing({ ...editing, reference: e.target.value })} placeholder="ABC123" />
             </Field>
             <Field label="Date (expiry, booking, departure…)">
-              <Input
-                type="date"
-                value={editing.date}
-                onChange={(e) => setEditing({ ...editing, date: e.target.value })}
-              />
+              <Input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} />
             </Field>
             <Field label="Notes">
-              <Textarea
-                rows={3}
-                value={editing.notes}
-                onChange={(e) => setEditing({ ...editing, notes: e.target.value })}
-              />
+              <Textarea rows={3} value={editing.notes} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} />
             </Field>
             <div className="flex items-center justify-between pt-1">
               {!isNew ? (
-                <Button variant="ghost" onClick={() => remove(editing.id)}>🗑 Delete</Button>
+                <Button variant="ghost" onClick={() => remove(editing.id)}>
+                  <TrashIcon size={18} /> Delete
+                </Button>
               ) : (
                 <span />
               )}

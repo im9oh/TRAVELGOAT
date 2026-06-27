@@ -5,6 +5,8 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react'
+import { Goat } from './Goat'
+import { CloseIcon } from './icons'
 
 /* ---------------- Button ---------------- */
 type Variant =
@@ -273,11 +275,8 @@ export function Mascot({
   className?: string
 }) {
   return (
-    <div
-      className={`flex shrink-0 items-center justify-center rounded-full bg-[#d7ffb8] ${bob ? 'tg-bob' : ''} ${className}`}
-      style={{ width: size, height: size, fontSize: size * 0.55 }}
-    >
-      🐐
+    <div className={`shrink-0 ${bob ? 'tg-bob' : ''} ${className}`}>
+      <Goat size={size} />
     </div>
   )
 }
@@ -297,13 +296,13 @@ export function EmptyState({
   title,
   hint,
 }: {
-  icon: string
+  icon: ReactNode
   title: string
   hint?: string
 }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#e5e5e5] bg-white px-6 py-12 text-center">
-      <div className="text-5xl">{icon}</div>
+      <div className="text-[#cdd5dc]">{icon}</div>
       <p className="mt-3 text-lg font-extrabold text-[#4b4b4b]">{title}</p>
       {hint && (
         <p className="mt-1 max-w-xs text-sm font-bold text-[#afafaf]">{hint}</p>
@@ -338,10 +337,10 @@ export function Modal({
           <h3 className="text-xl font-extrabold text-[#3c3c3c]">{title}</h3>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-xl font-black text-[#afafaf] hover:bg-[#f0f0f0]"
+            className="rounded-full p-2 text-[#afafaf] hover:bg-[#f0f0f0]"
             aria-label="Close"
           >
-            ✕
+            <CloseIcon size={20} />
           </button>
         </div>
         {children}

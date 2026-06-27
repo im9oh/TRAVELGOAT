@@ -6,55 +6,46 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { StarIcon } from './icons'
 
 interface Toast {
   id: number
   text: string
-  emoji: string
+  icon: ReactNode
 }
 
 interface RewardContextValue {
-  /** Show a floating reward pill, e.g. reward(10, '🎒') */
-  reward: (xp: number, emoji?: string) => void
+  /** Show a floating reward pill, e.g. reward(10, <BackpackIcon/>) */
+  reward: (xp: number, icon?: ReactNode) => void
   /** Show a custom message pill */
-  cheer: (text: string, emoji?: string) => void
+  cheer: (text: string, icon?: ReactNode) => void
   /** Fire a confetti burst */
   celebrate: () => void
 }
 
 const RewardContext = createContext<RewardContextValue | null>(null)
 
-const CONFETTI_COLORS = [
-  '#58cc02',
-  '#1cb0f6',
-  '#ffc800',
-  '#ff4b4b',
-  '#ce82ff',
-  '#ff9600',
-]
+const CONFETTI_COLORS = ['#58cc02', '#1cb0f6', '#ffc800', '#ff4b4b', '#ce82ff', '#ff9600']
 
 export function RewardProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
   const [confetti, setConfetti] = useState<number[]>([])
   const idRef = useRef(0)
 
-  const push = useCallback((text: string, emoji: string) => {
+  const push = useCallback((text: string, icon: ReactNode) => {
     const id = ++idRef.current
-    setToasts((t) => [...t, { id, text, emoji }])
-    setTimeout(() => {
-      setToasts((t) => t.filter((x) => x.id !== id))
-    }, 2400)
+    setToasts((t) => [...t, { id, text, icon }])
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 2400)
   }, [])
 
   const celebrate = useCallback(() => {
-    const burst = Array.from({ length: 80 }, (_, i) => i)
-    setConfetti(burst)
+    setConfetti(Array.from({ length: 90 }, (_, i) => i))
     setTimeout(() => setConfetti([]), 3200)
   }, [])
 
   const value: RewardContextValue = {
-    reward: (xp, emoji = '⭐') => push(`+${xp} XP`, emoji),
-    cheer: (text, emoji = '🎉') => push(text, emoji),
+    reward: (xp, icon) => push(`+${xp} XP`, icon ?? <StarIcon size={18} />),
+    cheer: (text, icon) => push(text, icon ?? <StarIcon size={18} />),
     celebrate,
   }
 
@@ -62,20 +53,18 @@ export function RewardProvider({ children }: { children: ReactNode }) {
     <RewardContext.Provider value={value}>
       {children}
 
-      {/* Floating reward pills */}
       <div className="pointer-events-none fixed inset-x-0 top-3 z-[70] flex flex-col items-center gap-2">
         {toasts.map((t) => (
           <div
             key={t.id}
             className="tg-toast flex items-center gap-2 rounded-full bg-[#3c3c3c] px-4 py-2 text-base font-extrabold text-white shadow-lg"
           >
-            <span className="text-xl">{t.emoji}</span>
+            <span className="text-[#ffc800]">{t.icon}</span>
             {t.text}
           </div>
         ))}
       </div>
 
-      {/* Confetti */}
       {confetti.map((i) => {
         const left = (i * 37) % 100
         const delay = (i % 10) * 0.08

@@ -16,6 +16,7 @@ import {
   SpeechBubble,
   EmptyState,
 } from '../components/ui'
+import { BookIcon, PlusIcon, TrashIcon } from '../components/icons'
 import { uid, formatDate } from '../lib/format'
 
 function todayISO() {
@@ -53,7 +54,7 @@ export default function Journal() {
         ? [...prev.journal, editing]
         : prev.journal.map((j) => (j.id === editing.id ? editing : j)),
     }))
-    if (creating) reward(40, '📔')
+    if (creating) reward(40, <BookIcon size={18} />)
     setEditing(null)
   }
   function remove(id: string) {
@@ -66,7 +67,11 @@ export default function Journal() {
       <SectionTitle
         title="Journal"
         subtitle={`${journal.length} ${journal.length === 1 ? 'entry' : 'entries'}`}
-        action={<Button size="sm" variant="gold" onClick={openNew}>+ Entry</Button>}
+        action={
+          <Button size="sm" variant="gold" onClick={openNew}>
+            <PlusIcon size={16} /> Entry
+          </Button>
+        }
       />
 
       {sorted.length === 0 ? (
@@ -75,11 +80,15 @@ export default function Journal() {
             <Mascot size={48} bob />
             <div className="flex-1">
               <SpeechBubble>
-                Write your first memory — entries are worth 40 XP each! ✍️
+                Write your first memory — entries are worth 40 XP each!
               </SpeechBubble>
             </div>
           </div>
-          <EmptyState icon="📔" title="No entries yet" hint="Capture moments, meals, and memories as you travel." />
+          <EmptyState
+            icon={<BookIcon size={48} strokeWidth={2} />}
+            title="No entries yet"
+            hint="Capture moments, meals, and memories as you travel."
+          />
         </div>
       ) : (
         <div className="space-y-3">
@@ -136,7 +145,9 @@ export default function Journal() {
             </Field>
             <div className="flex items-center justify-between pt-1">
               {!isNew ? (
-                <Button variant="ghost" onClick={() => remove(editing.id)}>🗑 Delete</Button>
+                <Button variant="ghost" onClick={() => remove(editing.id)}>
+                  <TrashIcon size={18} /> Delete
+                </Button>
               ) : (
                 <span />
               )}

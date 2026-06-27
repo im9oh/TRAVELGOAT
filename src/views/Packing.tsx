@@ -2,14 +2,8 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { useReward } from '../components/toast'
 import type { PackingItem } from '../types'
-import {
-  Card,
-  SectionTitle,
-  Button,
-  Input,
-  ProgressRing,
-  EmptyState,
-} from '../components/ui'
+import { Card, SectionTitle, Button, Input, ProgressRing, EmptyState } from '../components/ui'
+import { BackpackIcon, CheckIcon, CloseIcon, PlusIcon } from '../components/icons'
 import { uid } from '../lib/format'
 
 export default function Packing() {
@@ -29,10 +23,7 @@ export default function Packing() {
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [packing])
 
-  const categories = useMemo(
-    () => [...new Set(packing.map((p) => p.category))].sort(),
-    [packing],
-  )
+  const categories = useMemo(() => [...new Set(packing.map((p) => p.category))].sort(), [packing])
 
   const packed = packing.filter((p) => p.packed).length
   const pct = packing.length > 0 ? (packed / packing.length) * 100 : 0
@@ -42,10 +33,7 @@ export default function Packing() {
     if (!trimmed) return
     setState((prev) => ({
       ...prev,
-      packing: [
-        ...prev.packing,
-        { id: uid(), name: trimmed, category: category.trim() || 'Other', packed: false },
-      ],
+      packing: [...prev.packing, { id: uid(), name: trimmed, category: category.trim() || 'Other', packed: false }],
     }))
     setName('')
   }
@@ -56,9 +44,9 @@ export default function Packing() {
       ...prev,
       packing: prev.packing.map((p) => (p.id === item.id ? { ...p, packed: willPack } : p)),
     }))
-    if (willPack) reward(10, '🎒')
+    if (willPack) reward(10, <BackpackIcon size={18} />)
     if (willAllBePacked) {
-      cheer('All packed! Bon voyage!', '🧳')
+      cheer('All packed! Bon voyage!', <BackpackIcon size={18} />)
       celebrate()
     }
   }
@@ -85,14 +73,13 @@ export default function Packing() {
           </ProgressRing>
           <div className="flex-1">
             <div className="text-lg font-extrabold text-[#3c3c3c]">
-              {pct >= 100 ? 'Ready to go! 🧳' : `${packing.length - packed} to pack`}
+              {pct >= 100 ? 'Ready to go!' : `${packing.length - packed} to pack`}
             </div>
             <p className="text-sm font-bold text-[#afafaf]">Every item is 10 XP.</p>
           </div>
         </Card>
       )}
 
-      {/* Add row */}
       <div className="mb-5 flex flex-col gap-2 sm:flex-row">
         <Input
           value={name}
@@ -110,7 +97,9 @@ export default function Packing() {
             className="sm:w-40"
             list="packing-categories"
           />
-          <Button variant="green" onClick={add}>Add</Button>
+          <Button variant="green" onClick={add}>
+            <PlusIcon size={16} /> Add
+          </Button>
         </div>
         <datalist id="packing-categories">
           {categories.map((c) => (
@@ -120,7 +109,11 @@ export default function Packing() {
       </div>
 
       {packing.length === 0 ? (
-        <EmptyState icon="🎒" title="Packing list is empty" hint="Add what you need to bring, grouped by category." />
+        <EmptyState
+          icon={<BackpackIcon size={48} strokeWidth={2} />}
+          title="Packing list is empty"
+          hint="Add what you need to bring, grouped by category."
+        />
       ) : (
         <div className="space-y-5">
           {grouped.map(([cat, items]) => {
@@ -133,24 +126,19 @@ export default function Packing() {
                 </div>
                 <div className="space-y-2">
                   {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="tg-card group flex items-center gap-3 !rounded-2xl px-3 py-2.5"
-                    >
+                    <div key={item.id} className="tg-card group flex items-center gap-3 !rounded-2xl px-3 py-2.5">
                       <button
                         onClick={() => toggle(item)}
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-black transition ${
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition ${
                           item.packed
                             ? 'bg-[#58cc02] text-white shadow-[0_2px_0_#58a700]'
                             : 'border-2 border-[#e5e5e5] text-transparent'
                         }`}
                         aria-label="Toggle packed"
                       >
-                        ✓
+                        <CheckIcon size={16} strokeWidth={3.4} />
                       </button>
-                      <span
-                        className={`flex-1 font-bold ${item.packed ? 'text-[#cfcfcf] line-through' : 'text-[#3c3c3c]'}`}
-                      >
+                      <span className={`flex-1 font-bold ${item.packed ? 'text-[#cfcfcf] line-through' : 'text-[#3c3c3c]'}`}>
                         {item.name}
                       </span>
                       <button
@@ -158,7 +146,7 @@ export default function Packing() {
                         className="text-[#d5d5d5] opacity-0 transition hover:text-[#ff4b4b] group-hover:opacity-100"
                         aria-label="Remove"
                       >
-                        ✕
+                        <CloseIcon size={16} />
                       </button>
                     </div>
                   ))}

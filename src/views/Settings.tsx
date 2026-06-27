@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useStore } from '../store'
 import { Card, SectionTitle, Button, Field, Input, Select } from '../components/ui'
+import { Goat } from '../components/Goat'
 import { CURRENCIES } from '../lib/format'
 import { computeXp, levelFromXp } from '../lib/game'
 
@@ -93,8 +94,8 @@ export default function Settings() {
           </div>
         )}
         <div className="flex flex-wrap gap-2">
-          <Button variant="white" onClick={exportData}>⬇ Export</Button>
-          <Button variant="white" onClick={() => fileRef.current?.click()}>⬆ Import</Button>
+          <Button variant="white" onClick={exportData}>Export backup</Button>
+          <Button variant="white" onClick={() => fileRef.current?.click()}>Import backup</Button>
           <input
             ref={fileRef}
             type="file"
@@ -128,9 +129,12 @@ export default function Settings() {
         </Button>
       </Card>
 
-      <p className="pb-4 text-center text-xs font-bold text-[#cfcfcf]">
-        TravelGoat 🐐 · made for {trip.name}
-      </p>
+      <div className="flex flex-col items-center gap-1 pb-4 pt-2">
+        <Goat size={40} blink={false} />
+        <p className="text-center text-xs font-bold text-[#cfcfcf]">
+          TravelGoat · made for {trip.name}
+        </p>
+      </div>
     </div>
   )
 }

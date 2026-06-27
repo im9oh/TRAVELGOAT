@@ -13,6 +13,19 @@ import {
   ProgressRing,
   EmptyState,
 } from '../components/ui'
+import {
+  BedIcon,
+  TrainIcon,
+  ForkKnifeIcon,
+  TicketIcon,
+  BagIcon,
+  ReceiptIcon,
+  SparkleIcon,
+  CoinsIcon,
+  PlusIcon,
+  TrashIcon,
+  type IconProps,
+} from '../components/icons'
 import { uid, formatMoney, formatDate } from '../lib/format'
 
 const CATEGORIES: ExpenseCategory[] = [
@@ -24,14 +37,14 @@ const CATEGORIES: ExpenseCategory[] = [
   'Fees',
   'Other',
 ]
-const CAT_ICON: Record<ExpenseCategory, string> = {
-  Accommodation: '🏨',
-  Transport: '🚆',
-  Food: '🍽️',
-  Activities: '🎟️',
-  Shopping: '🛍️',
-  Fees: '🧾',
-  Other: '✨',
+const CAT_ICON: Record<ExpenseCategory, (p: IconProps) => JSX.Element> = {
+  Accommodation: BedIcon,
+  Transport: TrainIcon,
+  Food: ForkKnifeIcon,
+  Activities: TicketIcon,
+  Shopping: BagIcon,
+  Fees: ReceiptIcon,
+  Other: SparkleIcon,
 }
 const CAT_COLOR: Record<ExpenseCategory, string> = {
   Accommodation: '#1cb0f6',
@@ -39,7 +52,7 @@ const CAT_COLOR: Record<ExpenseCategory, string> = {
   Food: '#ff9600',
   Activities: '#ce82ff',
   Shopping: '#ff4b4b',
-  Fees: '#afafaf',
+  Fees: '#9aa6b2',
   Other: '#ffc800',
 }
 
@@ -90,7 +103,7 @@ export default function Budget() {
         ? [...prev.expenses, editing]
         : prev.expenses.map((e) => (e.id === editing.id ? editing : e)),
     }))
-    if (creating) reward(5, '💸')
+    if (creating) reward(5, <CoinsIcon size={18} />)
     setEditing(null)
   }
   function remove(id: string) {
@@ -106,23 +119,17 @@ export default function Budget() {
       <SectionTitle
         title="Budget"
         subtitle="Log spending, keep the goat happy"
-        action={<Button size="sm" variant="gold" onClick={openNew}>+ Expense</Button>}
+        action={
+          <Button size="sm" variant="gold" onClick={openNew}>
+            <PlusIcon size={16} /> Expense
+          </Button>
+        }
       />
 
-      {/* Hero ring */}
       <Card className="mb-4 flex items-center gap-5 bg-gradient-to-b from-[#fffbe9] to-white">
-        <ProgressRing
-          value={pct}
-          size={124}
-          stroke={14}
-          color={overBudget ? '#ff4b4b' : '#ffc800'}
-        >
-          <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#afafaf]">
-            spent
-          </span>
-          <span className="text-xl font-black text-[#3c3c3c]">
-            {Math.round(pct)}%
-          </span>
+        <ProgressRing value={pct} size={124} stroke={14} color={overBudget ? '#ff4b4b' : '#ffc800'}>
+          <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#afafaf]">spent</span>
+          <span className="text-xl font-black text-[#3c3c3c]">{Math.round(pct)}%</span>
         </ProgressRing>
         <div className="flex-1">
           <div className="text-xs font-extrabold uppercase tracking-wide text-[#afafaf]">
@@ -137,18 +144,19 @@ export default function Budget() {
         </div>
       </Card>
 
-      {/* Category breakdown */}
       {byCategory.length > 0 && (
         <Card className="mb-4">
           <h3 className="mb-3 font-extrabold text-[#3c3c3c]">By category</h3>
           <div className="space-y-3">
             {byCategory.map((row) => {
+              const Icon = CAT_ICON[row.category]
               const rowPct = spent > 0 ? (row.total / spent) * 100 : 0
               return (
                 <div key={row.category}>
                   <div className="mb-1 flex items-center justify-between text-sm font-extrabold">
-                    <span className="text-[#777]">
-                      {CAT_ICON[row.category]} {row.category}
+                    <span className="flex items-center gap-2 text-[#777]">
+                      <Icon size={18} strokeWidth={2.4} style={{ color: CAT_COLOR[row.category] }} />
+                      {row.category}
                     </span>
                     <span className="text-[#3c3c3c]">{formatMoney(row.total, cur)}</span>
                   </div>
@@ -166,35 +174,38 @@ export default function Budget() {
       )}
 
       {sorted.length === 0 ? (
-        <EmptyState icon="💰" title="No expenses yet" hint="Log spending as you go — each one earns XP!" />
+        <EmptyState
+          icon={<CoinsIcon size={48} strokeWidth={2} />}
+          title="No expenses yet"
+          hint="Log spending as you go — each one earns XP!"
+        />
       ) : (
         <div className="space-y-2.5">
-          {sorted.map((e) => (
-            <Card key={e.id} onClick={() => openEdit(e)} className="!p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-lg"
-                    style={{ background: CAT_COLOR[e.category] + '22' }}
-                  >
-                    {CAT_ICON[e.category]}
-                  </span>
-                  <div>
-                    <div className="font-extrabold text-[#3c3c3c]">
-                      {e.description || e.category}
-                    </div>
-                    <div className="text-xs font-bold text-[#afafaf]">
-                      {formatDate(e.date)}
-                      {cityName(e.cityId) && ` · ${cityName(e.cityId)}`}
+          {sorted.map((e) => {
+            const Icon = CAT_ICON[e.category]
+            return (
+              <Card key={e.id} onClick={() => openEdit(e)} className="!p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="flex h-10 w-10 items-center justify-center rounded-xl"
+                      style={{ background: CAT_COLOR[e.category] + '22', color: CAT_COLOR[e.category] }}
+                    >
+                      <Icon size={20} strokeWidth={2.4} />
+                    </span>
+                    <div>
+                      <div className="font-extrabold text-[#3c3c3c]">{e.description || e.category}</div>
+                      <div className="text-xs font-bold text-[#afafaf]">
+                        {formatDate(e.date)}
+                        {cityName(e.cityId) && ` · ${cityName(e.cityId)}`}
+                      </div>
                     </div>
                   </div>
+                  <div className="text-lg font-black text-[#3c3c3c]">{formatMoney(e.amount, cur)}</div>
                 </div>
-                <div className="text-lg font-black text-[#3c3c3c]">
-                  {formatMoney(e.amount, cur)}
-                </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            )
+          })}
         </div>
       )}
 
@@ -211,36 +222,22 @@ export default function Budget() {
               />
             </Field>
             <Field label="Description">
-              <Input
-                value={editing.description}
-                onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-                placeholder="Dinner, museum ticket…"
-              />
+              <Input value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} placeholder="Dinner, museum ticket…" />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Category">
-                <Select
-                  value={editing.category}
-                  onChange={(e) => setEditing({ ...editing, category: e.target.value as ExpenseCategory })}
-                >
+                <Select value={editing.category} onChange={(e) => setEditing({ ...editing, category: e.target.value as ExpenseCategory })}>
                   {CATEGORIES.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </Select>
               </Field>
               <Field label="Date">
-                <Input
-                  type="date"
-                  value={editing.date}
-                  onChange={(e) => setEditing({ ...editing, date: e.target.value })}
-                />
+                <Input type="date" value={editing.date} onChange={(e) => setEditing({ ...editing, date: e.target.value })} />
               </Field>
             </div>
             <Field label="City (optional)">
-              <Select
-                value={editing.cityId ?? ''}
-                onChange={(e) => setEditing({ ...editing, cityId: e.target.value || null })}
-              >
+              <Select value={editing.cityId ?? ''} onChange={(e) => setEditing({ ...editing, cityId: e.target.value || null })}>
                 <option value="">— None —</option>
                 {cities.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
@@ -249,7 +246,9 @@ export default function Budget() {
             </Field>
             <div className="flex items-center justify-between pt-1">
               {!isNew ? (
-                <Button variant="ghost" onClick={() => remove(editing.id)}>🗑 Delete</Button>
+                <Button variant="ghost" onClick={() => remove(editing.id)}>
+                  <TrashIcon size={18} /> Delete
+                </Button>
               ) : (
                 <span />
               )}
