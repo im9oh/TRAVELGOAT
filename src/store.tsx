@@ -53,6 +53,7 @@ function seed(): AppState {
       endDate: '2027-07-04',
       homeCurrency: 'USD',
       totalBudget: 15000,
+      savingsGoal: 12000,
     },
     cities,
     expenses: [],
@@ -67,6 +68,11 @@ function seed(): AppState {
     ],
     journal: [],
     docs: [],
+    savings: [
+      { id: uid(), date: '2026-01-15', amount: 1500, note: 'Kickoff deposit' },
+      { id: uid(), date: '2026-03-01', amount: 1200, note: 'Tax refund' },
+      { id: uid(), date: '2026-05-01', amount: 900, note: 'Side gig' },
+    ],
     game: { streak: 0, bestStreak: 0, lastCheckIn: null },
   }
 }
@@ -82,6 +88,8 @@ function load(): AppState {
         return {
           ...seed(),
           ...parsed,
+          trip: { ...seed().trip, ...parsed.trip },
+          savings: parsed.savings ?? [],
           game: parsed.game ?? { streak: 0, bestStreak: 0, lastCheckIn: null },
         }
       }

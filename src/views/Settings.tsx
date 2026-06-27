@@ -80,6 +80,14 @@ export default function Settings() {
               />
             </Field>
           </div>
+          <Field label="Savings goal">
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={trip.savingsGoal || ''}
+              onChange={(e) => patchTrip({ savingsGoal: parseFloat(e.target.value) || 0 })}
+            />
+          </Field>
         </div>
       </Card>
 

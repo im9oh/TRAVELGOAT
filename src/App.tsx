@@ -17,7 +17,7 @@ import {
 } from './components/icons'
 import Dashboard from './views/Dashboard'
 import Itinerary from './views/Itinerary'
-import Budget from './views/Budget'
+import Money from './views/Money'
 import Places from './views/Places'
 import Packing from './views/Packing'
 import Journal from './views/Journal'
@@ -37,7 +37,7 @@ export type TabKey =
 const BOTTOM: { key: TabKey; label: string; Icon: (p: IconProps) => JSX.Element }[] = [
   { key: 'dashboard', label: 'Home', Icon: HomeIcon },
   { key: 'itinerary', label: 'Journey', Icon: RouteIcon },
-  { key: 'budget', label: 'Budget', Icon: CoinsIcon },
+  { key: 'budget', label: 'Money', Icon: CoinsIcon },
   { key: 'places', label: 'Places', Icon: CompassIcon },
   { key: 'packing', label: 'Pack', Icon: BackpackIcon },
 ]
@@ -55,7 +55,7 @@ export default function App() {
       case 'itinerary':
         return <Itinerary />
       case 'budget':
-        return <Budget />
+        return <Money />
       case 'places':
         return <Places />
       case 'packing':

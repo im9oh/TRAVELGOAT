@@ -10,6 +10,7 @@ export const XP = {
   journalEntry: 40,
   docAdded: 15,
   perStreakDay: 15,
+  savingsDeposit: 20,
 }
 
 export interface LevelInfo {
@@ -52,8 +53,13 @@ export function computeXp(s: AppState): number {
   xp += s.expenses.length * XP.expenseLogged
   xp += s.journal.length * XP.journalEntry
   xp += s.docs.length * XP.docAdded
+  xp += (s.savings?.length ?? 0) * XP.savingsDeposit
   xp += (s.game?.bestStreak ?? 0) * XP.perStreakDay
   return xp
+}
+
+export function savedTotal(s: AppState): number {
+  return (s.savings ?? []).reduce((sum, d) => sum + d.amount, 0)
 }
 
 /** Trip-readiness meter (0-100) — how prepared you are to go. */
@@ -95,6 +101,7 @@ export type AchievementIcon =
   | 'book'
   | 'coins'
   | 'flame'
+  | 'jar'
 
 export interface Achievement {
   id: string
@@ -136,6 +143,8 @@ export function computeAchievements(s: AppState): Achievement[] {
     mk('foodie', 'Bon Appétit', 'fork', 'Save 5 food spots', s.places.filter((p) => p.category === 'Food').length, 5),
     mk('scribe', 'Storyteller', 'book', 'Write 5 journal entries', s.journal.length, 5),
     mk('accountant', 'Budget Boss', 'coins', 'Log 15 expenses', s.expenses.length, 15),
+    mk('first-save', 'Piggy Bank', 'jar', 'Make your first deposit', (s.savings ?? []).length, 1),
+    mk('funded', 'Fully Funded', 'jar', 'Reach your savings goal', savedTotal(s), Math.max(1, s.trip.savingsGoal)),
     mk('streak7', 'On Fire', 'flame', 'Reach a 7-day streak', streak, 7),
   ]
 }

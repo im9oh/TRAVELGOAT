@@ -319,6 +319,13 @@ export const ShieldIcon = (p: IconProps) => (
   </S>
 )
 
+export const JarIcon = (p: IconProps) => (
+  <S {...p}>
+    <path d="M8 4h8M7.5 6.5h9M8 8.5c-1 1-1.2 2.2-1.2 3.5v5.5A2.5 2.5 0 0 0 9.3 20h5.4a2.5 2.5 0 0 0 2.5-2.5V12c0-1.3-.2-2.5-1.2-3.5z" />
+    <path d="M7 13.5c2 1 8 1 10 0" />
+  </S>
+)
+
 /* generic small icon used as fallback chip */
 export const MapIcon = (p: IconProps) => (
   <S {...p}>

@@ -15,6 +15,14 @@ export interface Trip {
   endDate: string
   homeCurrency: string // e.g. "USD"
   totalBudget: number // in home currency
+  savingsGoal: number // how much you want to save before the trip
+}
+
+export interface SavingsDeposit {
+  id: string
+  date: string
+  amount: number
+  note: string
 }
 
 export interface City {
@@ -109,5 +117,6 @@ export interface AppState {
   packing: PackingItem[]
   journal: JournalEntry[]
   docs: TravelDoc[]
+  savings: SavingsDeposit[]
   game: GameState
 }

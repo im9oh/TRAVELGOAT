@@ -3,6 +3,7 @@ import { useReward } from '../components/toast'
 import type { TabKey } from '../App'
 import { Card, Button, ProgressRing, ProgressBar, SpeechBubble } from '../components/ui'
 import { Goat } from '../components/Goat'
+import { SavingsJar } from '../components/SavingsJar'
 import {
   BackpackIcon,
   BedIcon,
@@ -21,6 +22,7 @@ import {
   WalkIcon,
   GlobeIcon,
   ForkKnifeIcon,
+  JarIcon,
   type IconProps,
 } from '../components/icons'
 import type { AchievementIcon, ReadinessKey } from '../lib/game'
@@ -32,6 +34,7 @@ import {
   computeAchievements,
   applyCheckIn,
   checkedInToday,
+  savedTotal,
 } from '../lib/game'
 
 const READY_ICON: Record<ReadinessKey, (p: IconProps) => JSX.Element> = {
@@ -50,12 +53,13 @@ const ACH_ICON: Record<AchievementIcon, (p: IconProps) => JSX.Element> = {
   book: BookIcon,
   coins: CoinsIcon,
   flame: FlameIcon,
+  jar: JarIcon,
 }
 
 export default function Dashboard({ onNavigate }: { onNavigate: (tab: TabKey) => void }) {
   const { state, setState } = useStore()
   const { reward, cheer, celebrate } = useReward()
-  const { trip, cities, expenses, game } = state
+  const { trip, cities, game } = state
 
   const xp = computeXp(state)
   const lvl = levelFromXp(xp)
@@ -63,7 +67,8 @@ export default function Dashboard({ onNavigate }: { onNavigate: (tab: TabKey) =>
   const achievements = computeAchievements(state)
   const unlocked = achievements.filter((a) => a.done).length
   const countdown = daysUntil(trip.startDate)
-  const spent = expenses.reduce((s, e) => s + e.amount, 0)
+  const saved = savedTotal(state)
+  const savePct = trip.savingsGoal > 0 ? (saved / trip.savingsGoal) * 100 : 0
   const today = new Date()
 
   const sorted = [...cities].sort((a, b) => a.arrival.localeCompare(b.arrival))
@@ -166,21 +171,24 @@ export default function Dashboard({ onNavigate }: { onNavigate: (tab: TabKey) =>
         </Card>
       </div>
 
-      {/* Budget glance */}
-      <Card onClick={() => onNavigate('budget')}>
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-extrabold text-[#3c3c3c]">
-            <CoinsIcon size={20} className="text-[#e6a700]" /> Budget
-          </h3>
-          <span className="flex items-center gap-1 text-sm font-extrabold text-[#afafaf]">
-            {formatMoney(spent, trip.homeCurrency)} / {formatMoney(trip.totalBudget, trip.homeCurrency)}
-            <ChevronRightIcon size={16} />
-          </span>
+      {/* Savings jar glance */}
+      <Card onClick={() => onNavigate('budget')} className="flex items-center gap-4 bg-gradient-to-b from-[#eaf6ff] to-white">
+        <SavingsJar pct={savePct} size={92} dropKey={0} />
+        <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <h3 className="flex items-center gap-2 font-extrabold text-[#3c3c3c]">
+              <CoinsIcon size={20} className="text-[#e6a700]" /> Savings jar
+            </h3>
+            <ChevronRightIcon size={16} className="text-[#afafaf]" />
+          </div>
+          <div className="mt-1 text-2xl font-black text-[#1c8a3c]">
+            {formatMoney(saved, trip.homeCurrency)}
+          </div>
+          <div className="mb-1.5 text-xs font-extrabold text-[#9bb0c2]">
+            of {formatMoney(trip.savingsGoal, trip.homeCurrency)} · {Math.round(savePct)}%
+          </div>
+          <ProgressBar value={savePct} color="gold" />
         </div>
-        <ProgressBar
-          value={trip.totalBudget > 0 ? (spent / trip.totalBudget) * 100 : 0}
-          color={spent > trip.totalBudget ? 'red' : 'gold'}
-        />
       </Card>
 
       {/* Achievements */}
