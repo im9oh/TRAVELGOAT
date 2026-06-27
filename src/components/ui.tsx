@@ -6,7 +6,7 @@ import type {
   TextareaHTMLAttributes,
 } from 'react'
 import { Goat } from './Goat'
-import { CloseIcon } from './icons'
+import { CloseIcon, ChevronRightIcon } from './icons'
 
 /* ---------------- Button ---------------- */
 type Variant =
@@ -75,6 +75,84 @@ export function Card({
     >
       {children}
     </div>
+  )
+}
+
+/* ---------------- Unit banner (Duolingo section header) ---------------- */
+type BannerColor = 'green' | 'blue' | 'gold' | 'purple' | 'red'
+const BANNER: Record<BannerColor, [string, string]> = {
+  green: ['#58cc02', '#46a302'],
+  blue: ['#1cb0f6', '#1899d6'],
+  gold: ['#ffc800', '#e6a700'],
+  purple: ['#ce82ff', '#a568cc'],
+  red: ['#ff4b4b', '#e63946'],
+}
+
+export function UnitBanner({
+  eyebrow,
+  title,
+  color = 'green',
+  action,
+}: {
+  eyebrow?: string
+  title: string
+  color?: BannerColor
+  action?: ReactNode
+}) {
+  const [bg, edge] = BANNER[color]
+  return (
+    <div
+      className="flex items-center justify-between rounded-2xl px-4 py-3 text-white"
+      style={{ background: bg, boxShadow: `0 4px 0 ${edge}` }}
+    >
+      <div className="min-w-0">
+        {eyebrow && (
+          <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-white/80">
+            {eyebrow}
+          </div>
+        )}
+        <div className="truncate text-lg font-extrabold leading-tight">{title}</div>
+      </div>
+      {action}
+    </div>
+  )
+}
+
+/* ---------------- List row ---------------- */
+export function ListRow({
+  icon,
+  iconBg = '#eef1f4',
+  iconFg = '#8a97a3',
+  title,
+  subtitle,
+  right,
+  onClick,
+}: {
+  icon: ReactNode
+  iconBg?: string
+  iconFg?: string
+  title: string
+  subtitle?: string
+  right?: ReactNode
+  onClick?: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-2xl border-2 border-[#eee] border-b-[3px] bg-white px-3 py-3 text-left transition active:translate-y-0.5"
+    >
+      <span
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+        style={{ background: iconBg, color: iconFg }}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="font-extrabold text-[#3c3c3c]">{title}</div>
+        {subtitle && <div className="truncate text-xs font-bold text-[#afafaf]">{subtitle}</div>}
+      </div>
+      {right ?? <ChevronRightIcon size={18} className="text-[#cbd3da]" />}
+    </button>
   )
 }
 

@@ -1,7 +1,16 @@
 import { useState } from 'react'
 import { useStore } from '../store'
 import type { City, TransportMode } from '../types'
-import { Button, Modal, Field, Input, Textarea, Select, SpeechBubble } from '../components/ui'
+import {
+  Button,
+  Modal,
+  Field,
+  Input,
+  Textarea,
+  Select,
+  SpeechBubble,
+  UnitBanner,
+} from '../components/ui'
 import { Goat } from '../components/Goat'
 import { Flag } from '../components/Flag'
 import {
@@ -13,13 +22,15 @@ import {
   WalkIcon,
   ArrowIcon,
   CheckIcon,
+  StarIcon,
+  LockIcon,
   FlagIcon,
   PlusIcon,
   BedIcon,
   TrashIcon,
   type IconProps,
 } from '../components/icons'
-import { uid, formatDate, nightsBetween } from '../lib/format'
+import { uid, formatDate, nightsBetween, parseDate } from '../lib/format'
 import { todayISO } from '../lib/game'
 
 const MODE_ICON: Record<TransportMode, (p: IconProps) => JSX.Element> = {
@@ -32,19 +43,13 @@ const MODE_ICON: Record<TransportMode, (p: IconProps) => JSX.Element> = {
   other: ArrowIcon,
 }
 const MODES: TransportMode[] = ['train', 'plane', 'bus', 'car', 'ferry', 'walk', 'other']
+const SECTION_COLORS = ['green', 'blue', 'purple', 'gold', 'red'] as const
 
 function emptyCity(): City {
   return {
-    id: uid(),
-    name: '',
-    country: '',
-    arrival: '',
-    departure: '',
-    accommodation: '',
-    accommodationNotes: '',
-    notes: '',
-    transportMode: 'train',
-    transportDetails: '',
+    id: uid(), name: '', country: '', arrival: '', departure: '',
+    accommodation: '', accommodationNotes: '', notes: '',
+    transportMode: 'train', transportDetails: '',
   }
 }
 
@@ -65,24 +70,24 @@ export default function Itinerary() {
     return 'future'
   }
 
-  function openNew() {
-    setEditing(emptyCity())
-    setIsNew(true)
+  const monthLabel = (d: string) => {
+    const dt = parseDate(d)
+    return dt ? dt.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'Dates TBD'
   }
-  function openEdit(c: City) {
-    setEditing({ ...c })
-    setIsNew(false)
-  }
+  // count stops per month for the banner eyebrow
+  const monthCounts = sorted.reduce<Record<string, number>>((m, c) => {
+    const k = c.arrival.slice(0, 7)
+    m[k] = (m[k] ?? 0) + 1
+    return m
+  }, {})
+
+  function openNew() { setEditing(emptyCity()); setIsNew(true) }
+  function openEdit(c: City) { setEditing({ ...c }); setIsNew(false) }
   function save() {
     if (!editing) return
     setState((prev) => {
       const exists = prev.cities.some((c) => c.id === editing.id)
-      return {
-        ...prev,
-        cities: exists
-          ? prev.cities.map((c) => (c.id === editing.id ? editing : c))
-          : [...prev.cities, editing],
-      }
+      return { ...prev, cities: exists ? prev.cities.map((c) => (c.id === editing.id ? editing : c)) : [...prev.cities, editing] }
     })
     setEditing(null)
   }
@@ -91,17 +96,13 @@ export default function Itinerary() {
     setEditing(null)
   }
 
-  const totalNights = sorted.reduce((s, c) => s + nightsBetween(c.arrival, c.departure), 0)
+  let lastMonth = ''
+  let sectionIdx = -1
 
   return (
     <div>
-      <div className="mb-5 flex items-end justify-between">
-        <div>
-          <h2 className="text-2xl font-extrabold text-[#3c3c3c]">Your Journey</h2>
-          <p className="text-sm font-bold text-[#afafaf]">
-            {sorted.length} stops · {totalNights} nights
-          </p>
-        </div>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-2xl font-extrabold text-[#3c3c3c]">Your Journey</h2>
         <Button size="sm" variant="green" onClick={openNew}>
           <PlusIcon size={16} /> Stop
         </Button>
@@ -116,104 +117,103 @@ export default function Itinerary() {
           </Button>
         </div>
       ) : (
-        <div className="relative flex flex-col items-center gap-1 pb-6">
+        <div className="flex flex-col items-stretch gap-1 pb-4">
           {sorted.map((city, i) => {
             const status = statusOf(i, city)
-            const offset = Math.round(Math.sin(i * 0.9) * 86)
+            const offset = Math.round(Math.sin(i * 0.95) * 72)
             const PrevMode = i > 0 ? MODE_ICON[sorted[i - 1].transportMode] : null
+            const mk = city.arrival.slice(0, 7)
+            const showBanner = mk !== lastMonth
+            if (showBanner) {
+              lastMonth = mk
+              sectionIdx++
+            }
+            const color = SECTION_COLORS[sectionIdx % SECTION_COLORS.length]
             const nodeClass =
-              status === 'done'
-                ? 'tg-node--done'
-                : status === 'current'
-                  ? 'tg-node--current'
-                  : 'tg-node--future'
+              status === 'done' ? 'tg-node--done' : status === 'current' ? 'tg-node--current' : 'tg-node--future'
+
             return (
-              <div key={city.id} className="flex w-full flex-col items-center">
-                {PrevMode && (
-                  <div className="py-1.5 text-[#c8c8c8]">
-                    <PrevMode size={22} strokeWidth={2.4} />
+              <div key={city.id}>
+                {showBanner && (
+                  <div className="mb-2 mt-3">
+                    <UnitBanner
+                      color={color}
+                      eyebrow={`${monthCounts[mk]} ${monthCounts[mk] === 1 ? 'stop' : 'stops'}`}
+                      title={monthLabel(city.arrival)}
+                      action={<FlagIcon size={22} className="text-white/90" />}
+                    />
                   </div>
                 )}
 
-                <div className="relative flex items-center" style={{ transform: `translateX(${offset}px)` }}>
-                  {status === 'current' && (
-                    <div className="absolute right-full mr-1 hidden sm:block">
-                      <Goat size={54} className="tg-bob" />
+                <div className="flex flex-col items-center">
+                  {PrevMode && !showBanner && (
+                    <div className="py-1 text-[#d0d0d0]">
+                      <PrevMode size={22} strokeWidth={2.4} />
                     </div>
                   )}
 
-                  {/* pulse ring for current */}
-                  {status === 'current' && (
-                    <span className="pointer-events-none absolute inset-0 rounded-full">
-                      <span className="tg-pulse-ring absolute inset-0 rounded-full bg-[#58cc02]/40" />
-                    </span>
-                  )}
-
-                  <button
-                    onClick={() => openEdit(city)}
-                    className={`tg-node ${nodeClass} relative text-white`}
-                    aria-label={city.name}
-                  >
-                    {status === 'done' ? (
-                      <CheckIcon size={30} strokeWidth={3.4} />
-                    ) : (
-                      <span className={`text-2xl font-black ${status === 'future' ? 'text-white/90' : ''}`}>
-                        {i + 1}
-                      </span>
+                  <div className="relative flex items-center" style={{ transform: `translateX(${offset}px)` }}>
+                    {status === 'current' && (
+                      <div className="absolute right-full mr-1 hidden sm:block">
+                        <Goat size={52} className="tg-bob" />
+                      </div>
                     )}
                     {status === 'current' && (
-                      <span className="absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-[#58cc02] shadow-[0_2px_0_#e5e5e5]">
-                        {i === 0 ? 'Start' : 'Next'}
+                      <span className="pointer-events-none absolute inset-0 rounded-full">
+                        <span className="tg-pulse-ring absolute inset-0 rounded-full bg-[#58cc02]/35" />
                       </span>
                     )}
-                  </button>
-                </div>
 
-                {/* label */}
-                <div
-                  className="mt-2 flex flex-col items-center"
-                  style={{ transform: `translateX(${offset}px)` }}
-                >
-                  <span className="text-sm font-extrabold text-[#3c3c3c]">
-                    {city.name || 'Untitled'}
-                  </span>
-                  <span className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold text-[#afafaf]">
-                    <Flag country={city.country} size={18} />
-                    {formatDate(city.arrival, { month: 'short', day: 'numeric' })} ·{' '}
-                    {nightsBetween(city.arrival, city.departure)}n
-                  </span>
+                    <button onClick={() => openEdit(city)} className={`tg-node ${nodeClass} text-white`} aria-label={city.name}>
+                      {status === 'done' ? (
+                        <CheckIcon size={32} strokeWidth={3.4} />
+                      ) : status === 'current' ? (
+                        <StarIcon size={34} className="text-white" />
+                      ) : (
+                        <LockIcon size={26} className="text-white/85" />
+                      )}
+                      {status === 'current' && (
+                        <span className="tg-bounce absolute -top-10 left-1/2 rounded-2xl bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-wide text-[#58cc02] shadow-[0_3px_0_#e5e5e5]">
+                          {i === 0 ? 'Start' : 'Next'}
+                          <span className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-white" />
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="mt-2 flex flex-col items-center" style={{ transform: `translateX(${offset}px)` }}>
+                    <span className="text-sm font-extrabold text-[#3c3c3c]">{city.name || 'Untitled'}</span>
+                    <span className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold text-[#afafaf]">
+                      <Flag country={city.country} size={18} />
+                      {formatDate(city.arrival, { month: 'short', day: 'numeric' })} · {nightsBetween(city.arrival, city.departure)}n
+                    </span>
+                  </div>
                 </div>
               </div>
             )
           })}
 
-          {/* finish */}
-          <div className="mt-4 flex flex-col items-center text-[#cbb66b]">
-            <FlagIcon size={30} className="text-[#ffc800]" />
-            <span className="mt-0.5 text-xs font-extrabold uppercase tracking-wide text-[#afafaf]">
-              Trip complete
-            </span>
+          <div className="mt-5 flex flex-col items-center text-[#cbb66b]">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#fff4d6]">
+              <FlagIcon size={28} className="text-[#ffc800]" />
+            </div>
+            <span className="mt-1 text-xs font-extrabold uppercase tracking-wide text-[#afafaf]">Trip complete</span>
           </div>
         </div>
       )}
 
       {sorted.length > 0 && (
-        <div className="mt-2 flex items-start gap-2">
+        <div className="mt-3 flex items-start gap-2">
           <Goat size={44} />
           <div className="flex-1">
             <SpeechBubble>
-              Tap any stop to add your hotel, transport, and notes. Filling these in raises your
-              readiness!
+              Tap a stop to add your hotel, transport and notes — it all raises your readiness.
             </SpeechBubble>
           </div>
         </div>
       )}
 
-      <Modal
-        open={!!editing}
-        onClose={() => setEditing(null)}
-        title={isNew ? 'Add stop' : editing?.name || 'Edit stop'}
-      >
+      <Modal open={!!editing} onClose={() => setEditing(null)} title={isNew ? 'Add stop' : editing?.name || 'Edit stop'}>
         {editing && (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -237,24 +237,14 @@ export default function Itinerary() {
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#bcbcbc]">
                   <BedIcon size={18} />
                 </span>
-                <Input
-                  className="!pl-10"
-                  value={editing.accommodation}
-                  onChange={(e) => setEditing({ ...editing, accommodation: e.target.value })}
-                  placeholder="Hotel name / Airbnb"
-                />
+                <Input className="!pl-10" value={editing.accommodation} onChange={(e) => setEditing({ ...editing, accommodation: e.target.value })} placeholder="Hotel name / Airbnb" />
               </div>
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Transport to next">
-                <Select
-                  value={editing.transportMode}
-                  onChange={(e) => setEditing({ ...editing, transportMode: e.target.value as TransportMode })}
-                >
+                <Select value={editing.transportMode} onChange={(e) => setEditing({ ...editing, transportMode: e.target.value as TransportMode })}>
                   {MODES.map((m) => (
-                    <option key={m} value={m}>
-                      {m[0].toUpperCase() + m.slice(1)}
-                    </option>
+                    <option key={m} value={m}>{m[0].toUpperCase() + m.slice(1)}</option>
                   ))}
                 </Select>
               </Field>
@@ -265,15 +255,10 @@ export default function Itinerary() {
             <Field label="Notes">
               <Textarea rows={3} value={editing.notes} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} placeholder="Anything to remember" />
             </Field>
-
             <div className="flex items-center justify-between pt-1">
               {!isNew ? (
-                <Button variant="ghost" onClick={() => remove(editing.id)}>
-                  <TrashIcon size={18} /> Delete
-                </Button>
-              ) : (
-                <span />
-              )}
+                <Button variant="ghost" onClick={() => remove(editing.id)}><TrashIcon size={18} /> Delete</Button>
+              ) : (<span />)}
               <div className="flex gap-2">
                 <Button variant="white" onClick={() => setEditing(null)}>Cancel</Button>
                 <Button variant="green" onClick={save}>Save</Button>

@@ -28,7 +28,7 @@
   --tg-sub: #777777;
   --tg-line: #e5e5e5;
   --tg-line-dark: #cfcfcf;
-  --tg-bg: #fbfbfb;
+  --tg-bg: #ffffff;
 }
 
 html,
@@ -111,27 +111,43 @@ input[type='number'] { -moz-appearance: textfield; }
   border-radius: 20px;
 }
 
-/* ---------- Journey path nodes ---------- */
+/* ---------- Journey path nodes (Duolingo lesson bubbles) ---------- */
 .tg-node {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   border: none;
   font-size: 1.9rem;
   cursor: pointer;
-  transition: transform 0.05s ease, box-shadow 0.05s ease;
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
 }
-.tg-node:active { transform: translateY(5px); }
-.tg-node--done    { background: var(--tg-gold);  box-shadow: 0 6px 0 var(--tg-gold-edge); }
-.tg-node--current { background: var(--tg-green); box-shadow: 0 6px 0 var(--tg-green-edge); }
-.tg-node--future  { background: #e5e5e5;         box-shadow: 0 6px 0 #c8c8c8; }
+/* glossy top highlight */
+.tg-node::before {
+  content: '';
+  position: absolute;
+  inset: 7px 7px 40% 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+}
+.tg-node:active { transform: translateY(7px); }
+.tg-node--done    { background: var(--tg-gold);  box-shadow: 0 8px 0 var(--tg-gold-edge); }
+.tg-node--current { background: var(--tg-green); box-shadow: 0 8px 0 var(--tg-green-edge); }
+.tg-node--future  { background: #e5e5e5;         box-shadow: 0 8px 0 #c8c8c8; }
 .tg-node--done:active    { box-shadow: 0 1px 0 var(--tg-gold-edge); }
 .tg-node--current:active { box-shadow: 0 1px 0 var(--tg-green-edge); }
 .tg-node--future:active  { box-shadow: 0 1px 0 #c8c8c8; }
+
+/* START bubble bounce */
+@keyframes tg-bounce {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -6px); }
+}
+.tg-bounce { animation: tg-bounce 1.4s ease-in-out infinite; }
 
 /* ---------- Inputs ---------- */
 .tg-input {
